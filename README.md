@@ -2,6 +2,10 @@
 
 Stock allocation tool.
 
+Tranche is a focused, no-login allocation workspace for quickly splitting a fixed cash amount across stocks.
+Compared with typical brokerage dashboards or ad-heavy finance sites, it keeps only the essentials in view:
+live quote checks, per-position sizing, budget tracking, and shareable scenario URLs.
+
 ## Preview
 
 ### Screenshot
@@ -22,3 +26,11 @@ npm run dev
 ```
 
 Open `http://localhost:3000`.
+
+## Why Zustand here?
+
+This app could be built with React Context + reducer, but Zustand is used for:
+
+- Simpler global state with fewer provider wrappers.
+- Built-in persistence middleware for the `tranche-session` localStorage key.
+- Easier selective subscriptions as the table grows, reducing unnecessary rerenders.

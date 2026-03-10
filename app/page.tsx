@@ -97,11 +97,13 @@ export default function Home() {
   const [budgetDraft, setBudgetDraft] = useState("");
   const [activePopoverId, setActivePopoverId] = useState<string | null>(null);
   const [perfLoadingMap, setPerfLoadingMap] = useState<Record<string, boolean>>({});
-  const [perfRequestedMap, setPerfRequestedMap] = useState<Record<string, boolean>>({});
 
   const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tickerInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const shareInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const priceRequestSeqRef = useRef<Record<string, number>>({});
+  const perfRequestSeqRef = useRef<Record<string, number>>({});
   const initializedRef = useRef(false);
 
   const allocated = useMemo(
@@ -139,6 +141,9 @@ export default function Home() {
         return;
       }
 
+      const requestSeq = (priceRequestSeqRef.current[positionId] ?? 0) + 1;
+      priceRequestSeqRef.current[positionId] = requestSeq;
+
       setLoading(positionId, true);
       try {
         const response = await fetch(`/api/price?ticker=${encodeURIComponent(cleanedTicker)}`);
@@ -149,12 +154,34 @@ export default function Home() {
         if (typeof data.price !== "number") {
           throw new Error("Not found");
         }
+
+        const currentPosition = useTrancheStore
+          .getState()
+          .positions.find((position) => position.id === positionId);
+        if (
+          !currentPosition ||
+          currentPosition.ticker !== cleanedTicker ||
+          priceRequestSeqRef.current[positionId] !== requestSeq
+        ) {
+          return;
+        }
+
         setPrice(positionId, {
           name: data.name ?? cleanedTicker,
           price: data.price,
           changePct1D: typeof data.changePct1D === "number" ? data.changePct1D : null,
         });
       } catch {
+        const currentPosition = useTrancheStore
+          .getState()
+          .positions.find((position) => position.id === positionId);
+        if (
+          !currentPosition ||
+          currentPosition.ticker !== cleanedTicker ||
+          priceRequestSeqRef.current[positionId] !== requestSeq
+        ) {
+          return;
+        }
         setError(positionId, "Not found");
       }
     },
@@ -163,30 +190,58 @@ export default function Home() {
 
   const fetchPerf = useCallback(
     async (position: Position) => {
-      if (!position.ticker || position.perf || perfLoadingMap[position.id] || perfRequestedMap[position.id]) {
+      if (!position.ticker || position.perf || perfLoadingMap[position.id]) {
         return;
       }
 
-      setPerfRequestedMap((state) => ({ ...state, [position.id]: true }));
+      const requestSeq = (perfRequestSeqRef.current[position.id] ?? 0) + 1;
+      perfRequestSeqRef.current[position.id] = requestSeq;
+      const requestTicker = position.ticker;
       setPerfLoadingMap((state) => ({ ...state, [position.id]: true }));
 
       try {
-        const response = await fetch(`/api/perf?ticker=${encodeURIComponent(position.ticker)}`);
+        const response = await fetch(`/api/perf?ticker=${encodeURIComponent(requestTicker)}`);
         if (!response.ok) {
           throw new Error("No data");
         }
         const data: PositionPerf = await response.json();
+
+        const currentPosition = useTrancheStore
+          .getState()
+          .positions.find((candidate) => candidate.id === position.id);
+        if (
+          !currentPosition ||
+          currentPosition.ticker !== requestTicker ||
+          perfRequestSeqRef.current[position.id] !== requestSeq
+        ) {
+          return;
+        }
+
         setPerf(position.id, {
           changePct1W: typeof data.changePct1W === "number" ? data.changePct1W : null,
           changePct3M: typeof data.changePct3M === "number" ? data.changePct3M : null,
           changePctYTD: typeof data.changePctYTD === "number" ? data.changePctYTD : null,
           changePct1Y: typeof data.changePct1Y === "number" ? data.changePct1Y : null,
         });
+      } catch {
+        // Ignore API failures; next hover can retry.
       } finally {
-        setPerfLoadingMap((state) => ({ ...state, [position.id]: false }));
+        if (perfRequestSeqRef.current[position.id] === requestSeq) {
+          setPerfLoadingMap((state) => ({ ...state, [position.id]: false }));
+        }
       }
     },
-    [perfLoadingMap, perfRequestedMap, setPerf],
+    [perfLoadingMap, setPerf],
+  );
+
+  const handleTickerChange = useCallback(
+    (positionId: string, nextTicker: string) => {
+      priceRequestSeqRef.current[positionId] = (priceRequestSeqRef.current[positionId] ?? 0) + 1;
+      perfRequestSeqRef.current[positionId] = (perfRequestSeqRef.current[positionId] ?? 0) + 1;
+      setPerfLoadingMap((state) => ({ ...state, [positionId]: false }));
+      updateTicker(positionId, nextTicker);
+    },
+    [updateTicker],
   );
 
   useEffect(() => {
@@ -381,10 +436,13 @@ export default function Home() {
                   className="grid grid-cols-[88px_minmax(280px,1fr)_148px_112px_88px_36px] items-center gap-3 px-4 py-3"
                 >
                   <Input
+                    ref={(node) => {
+                      tickerInputRefs.current[position.id] = node;
+                    }}
                     value={position.ticker}
                     maxLength={10}
                     placeholder="TICK"
-                    onChange={(event) => updateTicker(position.id, event.target.value)}
+                    onChange={(event) => handleTickerChange(position.id, event.target.value)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === "Tab") {
                         event.preventDefault();
@@ -531,7 +589,7 @@ export default function Home() {
               variant="outline"
               onClick={() => {
                 const newId = addPosition();
-                requestAnimationFrame(() => shareInputRefs.current[newId]?.focus());
+                requestAnimationFrame(() => tickerInputRefs.current[newId]?.focus());
               }}
               className="h-10 w-full border border-dashed border-[#3f3f46] bg-transparent text-sm tracking-[0.14em] text-[#a1a1aa] hover:bg-[#202024] hover:text-[#e4e4e7]"
             >
