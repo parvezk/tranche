@@ -60,8 +60,8 @@ export async function GET(req: Request) {
     []) as Array<number | null>;
   const timestamps = (result.timestamp as number[] | undefined) ?? [];
 
-  const currentPrice = meta?.regularMarketPrice;
-  if (!isNumber(currentPrice) || closes.length === 0) {
+  const currPrice = meta?.regularMarketPrice;
+  if (!isNumber(currPrice) || closes.length === 0) {
     return Response.json(
       { error: "No data" },
       { status: 404 },
@@ -72,10 +72,10 @@ export async function GET(req: Request) {
 
   return Response.json(
     {
-      changePct1W: calculatePct(currentPrice, getCloseAtOffset(closes, 5)),
-      changePct3M: calculatePct(currentPrice, getCloseAtOffset(closes, 63)),
-      changePctYTD: calculatePct(currentPrice, ytdBaseClose),
-      changePct1Y: calculatePct(currentPrice, isNumber(closes[0]) ? closes[0] : null),
+      changePct1W: calculatePct(currPrice, getCloseAtOffset(closes, 5)),
+      changePct3M: calculatePct(currPrice, getCloseAtOffset(closes, 63)),
+      changePctYTD: calculatePct(currPrice, ytdBaseClose),
+      changePct1Y: calculatePct(currPrice, isNumber(closes[0]) ? closes[0] : null),
     },
     { headers: { "Cache-Control": "s-maxage=3600" } },
   );
