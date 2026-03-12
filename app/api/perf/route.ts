@@ -41,12 +41,18 @@ function getYtdBaseClose(closes: Array<number | null>, timestamps: number[], cur
 export async function GET(req: Request) {
   const ticker = getTickerFromRequest(req);
   if (!ticker) {
-    return Response.json({ error: "Missing ticker" }, { status: 400 });
+    return Response.json(
+      { error: "Missing ticker" },
+      { status: 400 },
+    );
   }
 
   const result = await fetchYahooChartResult(ticker, { interval: "1d", range: "1y" });
   if (!result) {
-    return Response.json({ error: "No data" }, { status: 404 });
+    return Response.json(
+      { error: "No data" },
+      { status: 404 },
+    );
   }
 
   const meta = (result.meta as PerfMeta | undefined) ?? null;
@@ -56,7 +62,10 @@ export async function GET(req: Request) {
 
   const currentPrice = meta?.regularMarketPrice;
   if (!isNumber(currentPrice) || closes.length === 0) {
-    return Response.json({ error: "No data" }, { status: 404 });
+    return Response.json(
+      { error: "No data" },
+      { status: 404 },
+    );
   }
 
   const ytdBaseClose = getYtdBaseClose(closes, timestamps, new Date().getFullYear());
