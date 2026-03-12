@@ -3,7 +3,7 @@
 Stock allocation tool.
 
 Tranche is a focused, no-login stock allocation workspace for planning position sizes and validating budget impact before placing trades.
-Compared with typical brokerage dashboards or ad-heavy finance sites, it keeps only the essentials in view:
+Compared with typical brokerage dashboards or ad-heavy personal finance sites, it keeps only the essentials in view:
 live quote checks, per-position sizing, budget tracking, and shareable scenario URLs.
 
 ## Preview
