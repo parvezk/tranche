@@ -141,6 +141,21 @@ export default function Home() {
         return;
       }
 
+      const isLatestPriceRequest = () => {
+        const currentPosition = useTrancheStore
+          .getState()
+          .positions.find((position) => position.id === positionId);
+
+        if (!currentPosition) {
+          return false;
+        }
+
+        return (
+          currentPosition.ticker.trim().toUpperCase() === cleanedTicker &&
+          priceRequestSeqRef.current[positionId] === requestSeq
+        );
+      };
+
       const requestSeq = (priceRequestSeqRef.current[positionId] ?? 0) + 1;
       priceRequestSeqRef.current[positionId] = requestSeq;
 
@@ -155,14 +170,7 @@ export default function Home() {
           throw new Error("Not found");
         }
 
-        const currentPosition = useTrancheStore
-          .getState()
-          .positions.find((position) => position.id === positionId);
-        if (
-          !currentPosition ||
-          currentPosition.ticker !== cleanedTicker ||
-          priceRequestSeqRef.current[positionId] !== requestSeq
-        ) {
+        if (!isLatestPriceRequest()) {
           return;
         }
 
@@ -172,14 +180,7 @@ export default function Home() {
           changePct1D: typeof data.changePct1D === "number" ? data.changePct1D : null,
         });
       } catch {
-        const currentPosition = useTrancheStore
-          .getState()
-          .positions.find((position) => position.id === positionId);
-        if (
-          !currentPosition ||
-          currentPosition.ticker !== cleanedTicker ||
-          priceRequestSeqRef.current[positionId] !== requestSeq
-        ) {
+        if (!isLatestPriceRequest()) {
           return;
         }
         setError(positionId, "Not found");
