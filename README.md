@@ -1,5 +1,12 @@
 # Tranche
 
+[![Next.js](https://img.shields.io/badge/Next.js-14-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-18-149ECA?logo=react&logoColor=white)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![State: Zustand](https://img.shields.io/badge/State-Zustand-7B4B2A)](https://zustand-demo.pmnd.rs/)
+[![Last commit](https://img.shields.io/github/last-commit/parvezk/tranche)](https://github.com/parvezk/tranche/commits/main)
+
 Stock allocation tool.
 
 Tranche is a focused, no-login stock allocation workspace for planning position sizes and validating budget impact before placing trades.
