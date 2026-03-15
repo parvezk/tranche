@@ -290,6 +290,61 @@ export default function Home() {
     setEditingBudget(false);
   }, [budgetDraft, setBudget]);
 
+  const handleBudgetKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") commitBudgetEdit();
+    if (event.key === "Escape") setEditingBudget(false);
+  }, [commitBudgetEdit]);
+
+  const handleTickerKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>, positionId: string, ticker: string) => {
+      if (event.key === "Enter" || event.key === "Tab") {
+        event.preventDefault();
+        void fetchPrice(positionId, ticker).then(() => {
+          shareInputRefs.current[positionId]?.focus();
+          shareInputRefs.current[positionId]?.select();
+        });
+      }
+    },
+    [fetchPrice],
+  );
+
+  const handlePositionMouseEnter = useCallback(
+    (position: Position) => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+      if (openTimerRef.current) clearTimeout(openTimerRef.current);
+      openTimerRef.current = setTimeout(() => {
+        setActivePopoverId(position.id);
+        void fetchPerf(position);
+      }, 180);
+    },
+    [fetchPerf],
+  );
+
+  const handlePositionMouseLeave = useCallback(() => {
+    if (openTimerRef.current) clearTimeout(openTimerRef.current);
+    closeTimerRef.current = setTimeout(() => {
+      setActivePopoverId(null);
+    }, 130);
+  }, []);
+
+  const handlePopoverMouseEnter = useCallback(() => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+  }, []);
+
+  const handlePopoverMouseLeave = useCallback(() => {
+    closeTimerRef.current = setTimeout(() => {
+      setActivePopoverId(null);
+    }, 130);
+  }, []);
+
+  const handleShareChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>, positionId: string) => {
+      const next = Number.parseFloat(event.target.value);
+      setShares(positionId, Number.isFinite(next) && next >= 0 ? next : 0);
+    },
+    [setShares],
+  );
+
   const incrementShares = useCallback(
     (position: Position, event: React.MouseEvent<HTMLButtonElement>, direction: -1 | 1) => {
       const multiplier = event.ctrlKey || event.metaKey ? 100 : event.shiftKey ? 10 : 1;
@@ -334,10 +389,7 @@ export default function Home() {
                   value={budgetDraft}
                   onChange={(event) => setBudgetDraft(event.target.value)}
                   onBlur={commitBudgetEdit}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") commitBudgetEdit();
-                    if (event.key === "Escape") setEditingBudget(false);
-                  }}
+                  onKeyDown={handleBudgetKeyDown}
                   className="mt-2 h-14 w-72 border-[#27272a] bg-[#09090b] px-4 text-[42px] font-bold text-[#f59e0b] [font-family:var(--font-ui)]"
                 />
               ) : (
@@ -444,34 +496,14 @@ export default function Home() {
                     maxLength={10}
                     placeholder="TICK"
                     onChange={(event) => handleTickerChange(position.id, event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === "Tab") {
-                        event.preventDefault();
-                        void fetchPrice(position.id, position.ticker).then(() => {
-                          shareInputRefs.current[position.id]?.focus();
-                          shareInputRefs.current[position.id]?.select();
-                        });
-                      }
-                    }}
+                    onKeyDown={(event) => handleTickerKeyDown(event, position.id, position.ticker)}
                     className="h-9 border-[#27272a] bg-[#09090b] px-2 text-center text-base font-semibold uppercase text-[#f59e0b] [font-family:var(--font-mono)] placeholder:text-[#3f3f46]"
                   />
 
                   <div
                     className="relative"
-                    onMouseEnter={() => {
-                      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-                      if (openTimerRef.current) clearTimeout(openTimerRef.current);
-                      openTimerRef.current = setTimeout(() => {
-                        setActivePopoverId(position.id);
-                        void fetchPerf(position);
-                      }, 180);
-                    }}
-                    onMouseLeave={() => {
-                      if (openTimerRef.current) clearTimeout(openTimerRef.current);
-                      closeTimerRef.current = setTimeout(() => {
-                        setActivePopoverId(null);
-                      }, 130);
-                    }}
+                    onMouseEnter={() => handlePositionMouseEnter(position)}
+                    onMouseLeave={handlePositionMouseLeave}
                   >
                     {position.loading ? (
                       <div className="space-y-2 py-0.5">
@@ -502,14 +534,8 @@ export default function Home() {
                     {showPopover && (
                       <div
                         className="absolute left-0 top-[calc(100%+8px)] z-20 w-64 rounded-sm border border-[#27272a] bg-[#121214] p-3 shadow-xl"
-                        onMouseEnter={() => {
-                          if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-                        }}
-                        onMouseLeave={() => {
-                          closeTimerRef.current = setTimeout(() => {
-                            setActivePopoverId(null);
-                          }, 130);
-                        }}
+                        onMouseEnter={handlePopoverMouseEnter}
+                        onMouseLeave={handlePopoverMouseLeave}
                       >
                         <p className="text-lg text-[#e4e4e7] [font-family:var(--font-mono)]">
                           {currency.format(position.price ?? 0)}
@@ -549,10 +575,7 @@ export default function Home() {
                         shareInputRefs.current[position.id] = node;
                       }}
                       value={position.shares}
-                      onChange={(event) => {
-                        const next = Number.parseFloat(event.target.value);
-                        setShares(position.id, Number.isFinite(next) && next >= 0 ? next : 0);
-                      }}
+                      onChange={(event) => handleShareChange(event, position.id)}
                       className="h-8 border-[#27272a] bg-[#09090b] px-2 text-center text-sm [font-family:var(--font-mono)]"
                     />
                     <Button
