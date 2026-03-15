@@ -1,4 +1,5 @@
 import { fetchYahooChartResult, getTickerFromRequest } from "@/lib/server/yahoo";
+import { isNumber } from "@/lib/utils";
 
 interface PerfMeta {
   regularMarketPrice?: number;
@@ -6,10 +7,6 @@ interface PerfMeta {
 
 interface PerfQuote {
   close?: Array<number | null>;
-}
-
-function isNumber(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value);
 }
 
 function getCloseAtOffset(closes: Array<number | null>, daysAgo: number): number | null {
