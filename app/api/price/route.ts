@@ -1,4 +1,5 @@
 import { fetchYahooChartResult, getTickerFromRequest } from "@/lib/server/yahoo";
+import { isNumber } from "@/lib/utils";
 
 interface PriceMeta {
   regularMarketPrice?: number;
@@ -18,13 +19,13 @@ export async function GET(req: Request) {
   const meta = (result?.meta as PriceMeta | undefined) ?? null;
   const price = meta?.regularMarketPrice;
 
-  if (!meta || typeof price !== "number") {
+  if (!meta || !isNumber(price)) {
     return Response.json({ error: "Not found" }, { status: 404 });
   }
 
   const prevClose = meta.chartPreviousClose ?? meta.previousClose;
   const changePct1D =
-    typeof prevClose === "number" && prevClose !== 0 ? ((price - prevClose) / prevClose) * 100 : null;
+    isNumber(prevClose) && prevClose !== 0 ? ((price - prevClose) / prevClose) * 100 : null;
 
   return Response.json(
     {
