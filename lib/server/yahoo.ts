@@ -1,4 +1,8 @@
-import { YAHOO_FINANCE_CHART_BASE_URL, YAHOO_FINANCE_USER_AGENT } from "@/lib/constants/yahoo";
+import {
+  TICKER_REGEX,
+  YAHOO_FINANCE_CHART_BASE_URL,
+  YAHOO_FINANCE_USER_AGENT,
+} from "@/lib/constants/yahoo";
 
 interface YahooChartResponse {
   chart?: {
@@ -18,7 +22,7 @@ export function getTickerFromRequest(req: Request): string | null {
   }
 
   const ticker = rawTicker.toUpperCase().trim();
-  return ticker.length > 0 ? ticker : null;
+  return TICKER_REGEX.test(ticker) ? ticker : null;
 }
 
 export async function fetchYahooChartResult(
