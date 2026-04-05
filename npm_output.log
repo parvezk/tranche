@@ -1,0 +1,15 @@
+
+> tranche@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+ ✓ Ready in 1879ms
+ ○ Compiling / ...
+ ✓ Compiled / in 5.6s (547 modules)
+ GET / 200 in 6344ms
+ ✓ Compiled in 751ms (258 modules)
+ ○ Compiling /api/price ...
+ ✓ Compiled /api/price in 3.2s (280 modules)
