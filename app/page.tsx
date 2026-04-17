@@ -39,20 +39,32 @@ function parseUrlState(search: string): { budget: number | null; positions: Arra
   const parsedBudget = budgetRaw ? Number.parseFloat(budgetRaw) : null;
   const budget = Number.isFinite(parsedBudget) ? Number(parsedBudget) : null;
 
-  const shares = (params.get("s") ?? "")
-    .split(",")
-    .map((entry) => entry.trim())
-    .filter(Boolean)
-    .map((entry) => {
-      const [rawTicker, rawShares] = entry.split(":");
-      const ticker = (rawTicker ?? "").toUpperCase().replace(/[^A-Z.\-]/g, "");
-      const sharesParsed = Number.parseFloat(rawShares ?? "");
-      return {
-        ticker,
-        shares: Number.isFinite(sharesParsed) && sharesParsed >= 0 ? sharesParsed : 0,
-      };
-    })
-    .filter((entry) => entry.ticker.length > 0);
+  const sharesRaw = params.get("s") ?? "";
+  const shares: Array<{ ticker: string; shares: number }> = [];
+
+  if (sharesRaw) {
+    for (const rawEntry of sharesRaw.split(",")) {
+      const entry = rawEntry.trim();
+      if (!entry) continue;
+
+      const colonIndex = entry.indexOf(":");
+      let ticker = "";
+      let sharesParsed = 0;
+
+      if (colonIndex !== -1) {
+        ticker = entry.slice(0, colonIndex).toUpperCase().replace(/[^A-Z.\-]/g, "");
+        const rawShares = entry.slice(colonIndex + 1);
+        const parsed = Number.parseFloat(rawShares);
+        sharesParsed = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+      } else {
+        ticker = entry.toUpperCase().replace(/[^A-Z.\-]/g, "");
+      }
+
+      if (ticker.length > 0) {
+        shares.push({ ticker, shares: sharesParsed });
+      }
+    }
+  }
 
   return { budget, positions: shares };
 }
