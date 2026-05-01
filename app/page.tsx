@@ -324,6 +324,23 @@ export default function Home() {
     [fetchPrice],
   );
 
+  const handleTickerBlur = useCallback(
+    (positionId: string, ticker: string) => {
+      const cleanedTicker = ticker.trim().toUpperCase();
+      if (!cleanedTicker) return;
+
+      const position = useTrancheStore
+        .getState()
+        .positions.find((p) => p.id === positionId);
+      if (!position) return;
+
+      if (position.price === null && !position.loading && !position.error) {
+        void fetchPrice(positionId, ticker);
+      }
+    },
+    [fetchPrice],
+  );
+
   const handlePositionMouseEnter = useCallback(
     (position: Position) => {
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
@@ -513,6 +530,7 @@ export default function Home() {
                     placeholder="TICK"
                     onChange={(event) => handleTickerChange(position.id, event.target.value)}
                     onKeyDown={(event) => handleTickerKeyDown(event, position.id, position.ticker)}
+                    onBlur={() => handleTickerBlur(position.id, position.ticker)}
                     className="h-9 border-[#27272a] bg-[#09090b] px-2 text-center text-base font-semibold uppercase text-[#f59e0b] [font-family:var(--font-mono)] placeholder:text-[#3f3f46]"
                   />
 
