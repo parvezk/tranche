@@ -91,6 +91,20 @@ function PerfBar({ value }: { value: number | null }) {
   );
 }
 
+
+const BUDGET_WARNING_THRESHOLD = 0.88;
+const BUDGET_DANGER_THRESHOLD = 1.0;
+
+function getProgressColor(ratio: number): string {
+  if (ratio > BUDGET_DANGER_THRESHOLD) {
+    return "bg-[#f87171]";
+  }
+  if (ratio > BUDGET_WARNING_THRESHOLD) {
+    return "bg-[#f59e0b]";
+  }
+  return "bg-[#4ade80]";
+}
+
 export default function Home() {
   const {
     budget,
@@ -135,8 +149,7 @@ export default function Home() {
   const overBudget = allocated > budget;
   const progressRatio = budget > 0 ? allocated / budget : 0;
   const progressValue = Math.max(0, Math.min(progressRatio * 100, 100));
-  const progressColorClass =
-    progressRatio > 1 ? "bg-[#f87171]" : progressRatio > 0.88 ? "bg-[#f59e0b]" : "bg-[#4ade80]";
+  const progressColorClass = getProgressColor(progressRatio);
 
   const clearTimers = useCallback(() => {
     if (openTimerRef.current) {
