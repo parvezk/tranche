@@ -23,8 +23,11 @@ function calculatePct(current: number, past: number | null): number | null {
 }
 
 function getYtdBaseClose(closes: Array<number | null>, timestamps: number[], currentYear: number): number | null {
+  const startOfYear = Math.floor(new Date(currentYear, 0, 1).getTime() / 1000);
+  const startOfNextYear = Math.floor(new Date(currentYear + 1, 0, 1).getTime() / 1000);
+
   const firstThisYearIndex = timestamps.findIndex(
-    (timestamp) => new Date(timestamp * 1000).getFullYear() === currentYear,
+    (timestamp) => timestamp >= startOfYear && timestamp < startOfNextYear,
   );
 
   if (firstThisYearIndex <= 0) {
