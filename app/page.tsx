@@ -388,7 +388,7 @@ export default function Home() {
   }, [budget, positions]);
 
   return (
-    <main className="min-h-screen bg-[#09090b] px-4 py-8 text-[#e4e4e7] sm:px-8">
+    <main className="min-h-screen overflow-x-hidden bg-[#09090b] px-3 py-6 text-[#e4e4e7] sm:px-6 sm:py-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
         <div className="pb-1">
           <h1 className="text-2xl font-bold text-[#e4e4e7] [font-family:var(--font-ui)]">Tranche</h1>
@@ -396,7 +396,7 @@ export default function Home() {
         </div>
 
         <header className="overflow-hidden rounded-sm border border-[#1a1a1e] bg-[#18181b]">
-          <div className="flex items-start justify-between px-5 pb-4 pt-4">
+          <div className="flex flex-col gap-4 px-4 pb-4 pt-4 sm:px-5 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.16em] text-[#52525b]">Proceeds to allocate</p>
               {editingBudget ? (
@@ -425,7 +425,7 @@ export default function Home() {
               )}
             </div>
 
-            <div className="flex items-start gap-8">
+            <div className="grid grid-cols-2 gap-4 sm:flex sm:items-start sm:gap-6 lg:gap-8">
               <div className="text-right">
                 <p className="text-xs uppercase tracking-[0.16em] text-[#52525b]">Allocated</p>
                 <p
@@ -446,7 +446,7 @@ export default function Home() {
                 variant="outline"
                 size="sm"
                 onClick={() => void copyShareLink()}
-                className="mt-0.5 border-[#27272a] bg-transparent text-[#e4e4e7] hover:bg-[#202024]"
+                className="col-span-2 mt-0.5 w-full border-[#27272a] bg-transparent text-[#e4e4e7] hover:bg-[#202024] sm:col-span-1 sm:w-auto"
               >
                 Share
               </Button>
@@ -459,8 +459,8 @@ export default function Home() {
           />
         </header>
 
-        <section className="rounded-sm border border-[#1a1a1e] bg-[#18181b]">
-          <div className="grid grid-cols-[88px_minmax(280px,1fr)_148px_112px_88px_36px] items-center gap-3 border-b border-[#1a1a1e] px-4 py-2 text-xs uppercase tracking-[0.12em] text-[#52525b]">
+        <section className="overflow-x-auto rounded-sm border border-[#1a1a1e] bg-[#18181b]">
+          <div className="grid min-w-[740px] grid-cols-[88px_minmax(280px,1fr)_148px_112px_88px_36px] items-center gap-3 border-b border-[#1a1a1e] px-3 py-2 text-xs uppercase tracking-[0.12em] text-[#52525b] sm:px-4">
             <span>Ticker</span>
             <span>Name / Price</span>
             <span className="text-center">Shares</span>
@@ -502,7 +502,7 @@ export default function Home() {
               return (
                 <div
                   key={position.id}
-                  className="grid grid-cols-[88px_minmax(280px,1fr)_148px_112px_88px_36px] items-center gap-3 px-4 py-3"
+                  className="grid min-w-[740px] grid-cols-[88px_minmax(280px,1fr)_148px_112px_88px_36px] items-center gap-3 px-3 py-3 sm:px-4"
                 >
                   <Input
                     ref={(node) => {
