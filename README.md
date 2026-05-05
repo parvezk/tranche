@@ -33,11 +33,3 @@ npm run dev
 ```
 
 Open `http://localhost:3000`.
-
-## Why Zustand here?
-
-This app could be built with React Context + reducer, but Zustand is used for:
-
-- Simpler global state with fewer provider wrappers.
-- Built-in persistence middleware for the `tranche-session` localStorage key.
-- Easier selective subscriptions as the table grows, reducing unnecessary rerenders.
