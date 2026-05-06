@@ -21,6 +21,24 @@ const budgetNumber = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "America/New_York",
+});
+
+const timeFormatter = new Intl.DateTimeFormat("en-US", {
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+  timeZone: "America/New_York",
+});
+
+function formatEasternDateTime(date: Date) {
+  return `${dateFormatter.format(date)} ${timeFormatter.format(date)} EST`;
+}
+
 function formatSignedPct(value: number | null) {
   if (typeof value !== "number") {
     return "--";
@@ -127,6 +145,7 @@ export default function Home() {
   const [budgetDraft, setBudgetDraft] = useState("");
   const [activePopoverId, setActivePopoverId] = useState<string | null>(null);
   const [perfLoadingMap, setPerfLoadingMap] = useState<Record<string, boolean>>({});
+  const [currentDateTime, setCurrentDateTime] = useState(() => formatEasternDateTime(new Date()));
 
   const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -417,12 +436,28 @@ export default function Home() {
     toast.success("Share URL copied");
   }, [budget, positions]);
 
+  useEffect(() => {
+    const updateDateTime = () => {
+      setCurrentDateTime(formatEasternDateTime(new Date()));
+    };
+
+    updateDateTime();
+    const interval = setInterval(updateDateTime, 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#09090b] px-3 py-6 text-[#e4e4e7] sm:px-6 sm:py-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
-        <div className="pb-1">
-          <h1 className="text-2xl font-bold text-[#e4e4e7] [font-family:var(--font-ui)]">Tranche</h1>
-          <p className="text-sm text-[#71717a]">Stock allocation tool.</p>
+        <div className="flex items-start justify-between gap-3 pb-1">
+          <div>
+            <h1 className="text-2xl font-bold text-[#e4e4e7] [font-family:var(--font-ui)]">Tranche</h1>
+            <p className="text-sm text-[#71717a]">Stock allocation tool.</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs uppercase tracking-[0.16em] text-[#52525b]">Date & time (ET)</p>
+            <p className="mt-1 text-sm text-[#a1a1aa] [font-family:var(--font-mono)]">{currentDateTime}</p>
+          </div>
         </div>
 
         <header className="overflow-hidden rounded-sm border border-[#1a1a1e] bg-[#18181b]">
