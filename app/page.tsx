@@ -220,7 +220,7 @@ export default function Home() {
   );
 
   const fetchPerf = useCallback(
-    async (position: Position, target: HTMLElement) => {
+    async (position: Position) => {
       if (!position.ticker || position.perf || perfLoadingMap[position.id]) {
         return;
       }
