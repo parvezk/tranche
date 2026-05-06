@@ -120,6 +120,8 @@ export default function Home() {
     setError,
     setPerf,
     resetMarketData,
+    clearAllocations,
+    clearEverything,
     replaceFromShareState,
   } = useTrancheStore();
 
@@ -400,6 +402,23 @@ export default function Home() {
     [setShares],
   );
 
+  const resetTransientUi = useCallback(() => {
+    setPerfLoadingMap({});
+    setActivePopoverId(null);
+  }, []);
+
+  const handleClearAllocations = useCallback(() => {
+    clearAllocations();
+    resetTransientUi();
+    toast.success("All allocations cleared");
+  }, [clearAllocations, resetTransientUi]);
+
+  const handleClearEverything = useCallback(() => {
+    clearEverything();
+    resetTransientUi();
+    toast.success("Everything is cleared");
+  }, [clearEverything, resetTransientUi]);
+
   const copyShareLink = useCallback(async () => {
     const url = new URL(window.location.href);
     url.searchParams.set("b", String(Number(budget.toFixed(2))));
@@ -471,6 +490,24 @@ export default function Home() {
                 >
                   {currency.format(remaining)}
                 </p>
+              </div>
+              <div className="col-span-2 mt-0.5 flex w-full gap-2 sm:col-span-1 sm:w-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClearAllocations}
+                  className="flex-1 border-[#27272a] bg-transparent text-[#e4e4e7] hover:bg-[#202024]"
+                >
+                  Clear Allocations
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClearEverything}
+                  className="flex-1 border-[#27272a] bg-transparent text-[#e4e4e7] hover:bg-[#202024]"
+                >
+                  Clear all
+                </Button>
               </div>
               <Button
                 variant="outline"
