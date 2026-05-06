@@ -126,6 +126,7 @@ export default function Home() {
   const [editingBudget, setEditingBudget] = useState(false);
   const [budgetDraft, setBudgetDraft] = useState("");
   const [activePopoverId, setActivePopoverId] = useState<string | null>(null);
+  const [popoverPosition, setPopoverPosition] = useState<{ top: number; left: number } | null>(null);
   const [perfLoadingMap, setPerfLoadingMap] = useState<Record<string, boolean>>({});
 
   const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -219,7 +220,7 @@ export default function Home() {
   );
 
   const fetchPerf = useCallback(
-    async (position: Position) => {
+    async (position: Position, target: HTMLElement) => {
       if (!position.ticker || position.perf || perfLoadingMap[position.id]) {
         return;
       }
@@ -355,10 +356,15 @@ export default function Home() {
   );
 
   const handlePositionMouseEnter = useCallback(
-    (position: Position) => {
+    (position: Position, target: HTMLElement) => {
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
       if (openTimerRef.current) clearTimeout(openTimerRef.current);
       openTimerRef.current = setTimeout(() => {
+        const rect = target.getBoundingClientRect();
+        setPopoverPosition({
+          top: rect.bottom + 8,
+          left: rect.left,
+        });
         setActivePopoverId(position.id);
         void fetchPerf(position);
       }, 180);
@@ -370,6 +376,7 @@ export default function Home() {
     if (openTimerRef.current) clearTimeout(openTimerRef.current);
     closeTimerRef.current = setTimeout(() => {
       setActivePopoverId(null);
+      setPopoverPosition(null);
     }, 130);
   }, []);
 
@@ -380,6 +387,7 @@ export default function Home() {
   const handlePopoverMouseLeave = useCallback(() => {
     closeTimerRef.current = setTimeout(() => {
       setActivePopoverId(null);
+      setPopoverPosition(null);
     }, 130);
   }, []);
 
@@ -489,8 +497,9 @@ export default function Home() {
           />
         </header>
 
-        <section className="overflow-x-auto rounded-sm border border-[#1a1a1e] bg-[#18181b]">
-          <div className="grid min-w-[740px] grid-cols-[88px_minmax(280px,1fr)_148px_112px_88px_36px] items-center gap-3 border-b border-[#1a1a1e] px-3 py-2 text-xs uppercase tracking-[0.12em] text-[#52525b] sm:px-4">
+        <section className="overflow-visible rounded-sm border border-[#1a1a1e] bg-[#18181b]">
+          <div className="overflow-x-auto overflow-y-visible">
+            <div className="grid min-w-[740px] grid-cols-[88px_minmax(280px,1fr)_148px_112px_88px_36px] items-center gap-3 border-b border-[#1a1a1e] px-3 py-2 text-xs uppercase tracking-[0.12em] text-[#52525b] sm:px-4">
             <span>Ticker</span>
             <span>Name / Price</span>
             <span className="text-center">Shares</span>
@@ -549,7 +558,7 @@ export default function Home() {
 
                   <div
                     className="relative"
-                    onMouseEnter={() => handlePositionMouseEnter(position)}
+                    onMouseEnter={(event) => handlePositionMouseEnter(position, event.currentTarget)}
                     onMouseLeave={handlePositionMouseLeave}
                   >
                     {position.loading ? (
@@ -578,9 +587,10 @@ export default function Home() {
                       </div>
                     )}
 
-                    {showPopover && (
+                    {showPopover && popoverPosition && (
                       <div
-                        className="absolute left-0 top-[calc(100%+8px)] z-20 w-64 rounded-sm border border-[#27272a] bg-[#121214] p-3 shadow-xl"
+                        className="fixed z-40 w-64 rounded-sm border border-[#27272a] bg-[#121214] p-3 shadow-xl"
+                        style={{ top: popoverPosition.top, left: popoverPosition.left }}
                         onMouseEnter={handlePopoverMouseEnter}
                         onMouseLeave={handlePopoverMouseLeave}
                       >
@@ -655,7 +665,7 @@ export default function Home() {
             })}
           </div>
 
-          <div className="p-4">
+            <div className="p-4">
             <Button
               variant="outline"
               onClick={() => {
@@ -666,6 +676,7 @@ export default function Home() {
             >
               + ADD POSITION
             </Button>
+            </div>
           </div>
         </section>
       </div>
