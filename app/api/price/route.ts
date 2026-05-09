@@ -1,5 +1,5 @@
-import { fetchYahooChartResult, getTickerFromRequest } from "@/lib/server/yahoo";
 import { isNumber } from "@/lib/utils";
+import { getChartDataFromRequest } from "@/lib/server/api-helpers";
 
 interface PriceMeta {
   regularMarketPrice?: number;
@@ -10,12 +10,11 @@ interface PriceMeta {
 }
 
 export async function GET(req: Request) {
-  const ticker = getTickerFromRequest(req);
-  if (!ticker) {
-    return Response.json({ error: "Missing ticker" }, { status: 400 });
+  const { errorResponse, ticker, result } = await getChartDataFromRequest(req, { interval: "1d", range: "1d" });
+  if (errorResponse) {
+    return errorResponse;
   }
 
-  const result = await fetchYahooChartResult(ticker, { interval: "1d", range: "1d" });
   const meta = (result?.meta as PriceMeta | undefined) ?? null;
   const price = meta?.regularMarketPrice;
 
