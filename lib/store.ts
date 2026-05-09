@@ -23,7 +23,7 @@ export interface Position {
   error: string | null;
 }
 
-interface ReplacePositionInput {
+export interface ReplacePositionInput {
   ticker: string;
   shares: number;
 }
