@@ -21,7 +21,7 @@ interface PositionRowProps {
   handlePositionMouseLeave: () => void;
   handlePopoverMouseEnter: () => void;
   handlePopoverMouseLeave: () => void;
-  incrementShares: (position: Position, event: React.MouseEvent, amount: number) => void;
+  incrementShares: (position: Position, event: React.MouseEvent<HTMLButtonElement>, amount: -1 | 1) => void;
   handleShareChange: (event: React.ChangeEvent<HTMLInputElement>, positionId: string) => void;
   removePosition: (id: string) => void;
 
