@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { type Position, type PositionPerf, useTrancheStore } from "@/lib/store";
+import { type Position, type PositionPerf, type ReplacePositionInput, useTrancheStore } from "@/lib/store";
 import { currency, budgetNumber, formatSignedPct, perfColor } from "@/lib/utils";
 
 
@@ -33,7 +33,47 @@ function formatEasternDateTime(date: Date) {
 }
 
 
-function parseUrlState(search: string): { budget: number | null; positions: Array<{ ticker: string; shares: number }> } | null {
+/**
+ * Parses the "s" query parameter (shares) into an array of position inputs.
+ * Format: "TICKER:SHARES,TICKER:SHARES"
+ */
+function parseShares(sParam: string | null): ReplacePositionInput[] {
+  const shares: ReplacePositionInput[] = [];
+  if (!sParam) return shares;
+
+  const entries = sParam.split(",");
+  for (const rawEntry of entries) {
+    const entry = rawEntry.trim();
+    if (!entry) continue;
+
+    const colonIndex = entry.indexOf(":");
+    let rawTicker: string;
+    let rawShares: string;
+
+    if (colonIndex === -1) {
+      rawTicker = entry;
+      rawShares = "";
+    } else {
+      rawTicker = entry.slice(0, colonIndex);
+      rawShares = entry.slice(colonIndex + 1);
+    }
+
+    const ticker = rawTicker.toUpperCase().replace(/[^A-Z.\-]/g, "");
+    if (ticker.length === 0) continue;
+
+    const sharesParsed = Number.parseFloat(rawShares);
+    shares.push({
+      ticker,
+      shares: Number.isFinite(sharesParsed) && sharesParsed >= 0 ? sharesParsed : 0,
+    });
+  }
+  return shares;
+}
+
+/**
+ * Parses the URL search string to extract the budget ("b") and position allocations ("s").
+ */
+function parseUrlState(search: string): { budget: number | null; positions: ReplacePositionInput[] } | null {
   const params = new URLSearchParams(search);
   if (!params.has("b") && !params.has("s")) {
     return null;
@@ -43,38 +83,9 @@ function parseUrlState(search: string): { budget: number | null; positions: Arra
   const parsedBudget = budgetRaw ? Number.parseFloat(budgetRaw) : null;
   const budget = Number.isFinite(parsedBudget) ? Number(parsedBudget) : null;
 
-  const shares: Array<{ ticker: string; shares: number }> = [];
-  const sParam = params.get("s");
-  if (sParam) {
-    const entries = sParam.split(",");
-    for (const rawEntry of entries) {
-      const entry = rawEntry.trim();
-      if (!entry) continue;
+  const positions = parseShares(params.get("s"));
 
-      const colonIndex = entry.indexOf(":");
-      let rawTicker: string;
-      let rawShares: string;
-
-      if (colonIndex === -1) {
-        rawTicker = entry;
-        rawShares = "";
-      } else {
-        rawTicker = entry.slice(0, colonIndex);
-        rawShares = entry.slice(colonIndex + 1);
-      }
-
-      const ticker = rawTicker.toUpperCase().replace(/[^A-Z.\-]/g, "");
-      if (ticker.length === 0) continue;
-
-      const sharesParsed = Number.parseFloat(rawShares);
-      shares.push({
-        ticker,
-        shares: Number.isFinite(sharesParsed) && sharesParsed >= 0 ? sharesParsed : 0,
-      });
-    }
-  }
-
-  return { budget, positions: shares };
+  return { budget, positions };
 }
 
 
