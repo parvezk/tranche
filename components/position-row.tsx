@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { currency, formatSignedPct, perfColor } from "@/lib/utils";
-import type { Position } from "@/lib/store";
+import { type Position, useTrancheStore } from "@/lib/store";
 
 interface PositionRowProps {
   position: Position;
@@ -14,17 +14,15 @@ interface PositionRowProps {
   perfLoadingMap: Record<string, boolean>;
   tickerInputRef: (node: HTMLInputElement | null) => void;
   shareInputRef: (node: HTMLInputElement | null) => void;
-  handleTickerChange: (positionId: string, value: string) => void;
-  handleTickerKeyDown: (event: React.KeyboardEvent<HTMLInputElement>, positionId: string, ticker: string) => void;
-  handleTickerBlur: (positionId: string, ticker: string) => void;
-  handlePositionMouseEnter: (position: Position, currentTarget: HTMLElement) => void;
-  handlePositionMouseLeave: () => void;
-  handlePopoverMouseEnter: () => void;
-  handlePopoverMouseLeave: () => void;
-  incrementShares: (position: Position, event: React.MouseEvent<HTMLButtonElement>, amount: -1 | 1) => void;
-  handleShareChange: (event: React.ChangeEvent<HTMLInputElement>, positionId: string) => void;
-  removePosition: (id: string) => void;
-
+  actions: {
+    handleTickerChange: (positionId: string, value: string) => void;
+    handleTickerKeyDown: (event: React.KeyboardEvent<HTMLInputElement>, positionId: string, ticker: string) => void;
+    handleTickerBlur: (positionId: string, ticker: string) => void;
+    handlePositionMouseEnter: (position: Position, currentTarget: HTMLElement) => void;
+    handlePositionMouseLeave: () => void;
+    handlePopoverMouseEnter: () => void;
+    handlePopoverMouseLeave: () => void;
+  };
 }
 
 export function PositionRow({
@@ -35,18 +33,20 @@ export function PositionRow({
   perfLoadingMap,
   tickerInputRef,
   shareInputRef,
-  handleTickerChange,
-  handleTickerKeyDown,
-  handleTickerBlur,
-  handlePositionMouseEnter,
-  handlePositionMouseLeave,
-  handlePopoverMouseEnter,
-  handlePopoverMouseLeave,
-  incrementShares,
-  handleShareChange,
-  removePosition,
-
+  actions,
 }: PositionRowProps) {
+  const { setShares, removePosition } = useTrancheStore();
+
+  const handleShareChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const next = Number.parseFloat(event.target.value);
+    setShares(position.id, Number.isFinite(next) && next >= 0 ? next : 0);
+  };
+
+  const incrementShares = (event: React.MouseEvent<HTMLButtonElement>, direction: -1 | 1) => {
+    const multiplier = event.ctrlKey || event.metaKey ? 100 : event.shiftKey ? 10 : 1;
+    const nextShares = Math.max(0, position.shares + direction * multiplier);
+    setShares(position.id, nextShares);
+  };
   const total = typeof position.price === "number" ? position.price * position.shares : 0;
   const pctBudget = budget > 0 ? (total / budget) * 100 : 0;
   const showPopover = activePopoverId === position.id && typeof position.price === "number" && !position.error;
@@ -82,16 +82,16 @@ export function PositionRow({
         value={position.ticker}
         maxLength={10}
         placeholder="TICK"
-        onChange={(event) => handleTickerChange(position.id, event.target.value)}
-        onKeyDown={(event) => handleTickerKeyDown(event, position.id, position.ticker)}
-        onBlur={() => handleTickerBlur(position.id, position.ticker)}
+        onChange={(event) => actions.handleTickerChange(position.id, event.target.value)}
+        onKeyDown={(event) => actions.handleTickerKeyDown(event, position.id, position.ticker)}
+        onBlur={() => actions.handleTickerBlur(position.id, position.ticker)}
         className="h-9 border-[#27272a] bg-[#09090b] px-2 text-center text-base font-semibold uppercase text-[#f59e0b] [font-family:var(--font-mono)] placeholder:text-[#3f3f46]"
       />
 
       <div
         className="relative"
-        onMouseEnter={(event) => handlePositionMouseEnter(position, event.currentTarget)}
-        onMouseLeave={handlePositionMouseLeave}
+        onMouseEnter={(event) => actions.handlePositionMouseEnter(position, event.currentTarget)}
+        onMouseLeave={actions.handlePositionMouseLeave}
       >
         {position.loading ? (
           <div className="space-y-2 py-0.5">
@@ -123,8 +123,8 @@ export function PositionRow({
           <div
             className="fixed z-40 w-64 rounded-sm border border-[#27272a] bg-[#121214] p-3 shadow-xl"
             style={{ top: popoverPosition.top, left: popoverPosition.left }}
-            onMouseEnter={handlePopoverMouseEnter}
-            onMouseLeave={handlePopoverMouseLeave}
+            onMouseEnter={actions.handlePopoverMouseEnter}
+            onMouseLeave={actions.handlePopoverMouseLeave}
           >
             <p className="text-lg text-[#e4e4e7] [font-family:var(--font-mono)]">
               {currency.format(position.price ?? 0)}
@@ -154,7 +154,7 @@ export function PositionRow({
         <Button
           variant="outline"
           size="icon-sm"
-          onClick={(event) => incrementShares(position, event, -1)}
+          onClick={(event) => incrementShares(event, -1)}
           className="h-8 w-8 border-[#27272a] bg-[#09090b] text-[#e4e4e7] hover:bg-[#202024]"
         >
           -
@@ -162,13 +162,13 @@ export function PositionRow({
         <Input
           ref={shareInputRef}
           value={position.shares}
-          onChange={(event) => handleShareChange(event, position.id)}
+          onChange={(event) => handleShareChange(event)}
           className="h-8 border-[#27272a] bg-[#09090b] px-2 text-center text-sm [font-family:var(--font-mono)]"
         />
         <Button
           variant="outline"
           size="icon-sm"
-          onClick={(event) => incrementShares(position, event, 1)}
+          onClick={(event) => incrementShares(event, 1)}
           className="h-8 w-8 border-[#27272a] bg-[#09090b] text-[#e4e4e7] hover:bg-[#202024]"
         >
           +

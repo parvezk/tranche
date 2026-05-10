@@ -392,23 +392,6 @@ export default function Home() {
     }, 130);
   }, []);
 
-  const handleShareChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>, positionId: string) => {
-      const next = Number.parseFloat(event.target.value);
-      setShares(positionId, Number.isFinite(next) && next >= 0 ? next : 0);
-    },
-    [setShares],
-  );
-
-  const incrementShares = useCallback(
-    (position: Position, event: React.MouseEvent<HTMLButtonElement>, direction: -1 | 1) => {
-      const multiplier = event.ctrlKey || event.metaKey ? 100 : event.shiftKey ? 10 : 1;
-      const nextShares = Math.max(0, position.shares + direction * multiplier);
-      setShares(position.id, nextShares);
-    },
-    [setShares],
-  );
-
   const resetTransientUi = useCallback(() => {
     setPerfLoadingMap({});
     setActivePopoverId(null);
@@ -575,17 +558,15 @@ export default function Home() {
                 shareInputRef={(node) => {
                   shareInputRefs.current[position.id] = node;
                 }}
-                handleTickerChange={handleTickerChange}
-                handleTickerKeyDown={handleTickerKeyDown}
-                handleTickerBlur={handleTickerBlur}
-                handlePositionMouseEnter={handlePositionMouseEnter}
-                handlePositionMouseLeave={handlePositionMouseLeave}
-                handlePopoverMouseEnter={handlePopoverMouseEnter}
-                handlePopoverMouseLeave={handlePopoverMouseLeave}
-                incrementShares={incrementShares}
-                handleShareChange={handleShareChange}
-                removePosition={removePosition}
-
+                actions={{
+                  handleTickerChange,
+                  handleTickerKeyDown,
+                  handleTickerBlur,
+                  handlePositionMouseEnter,
+                  handlePositionMouseLeave,
+                  handlePopoverMouseEnter,
+                  handlePopoverMouseLeave,
+                }}
               />
             ))}
           </div>
