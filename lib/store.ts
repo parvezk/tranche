@@ -27,7 +27,7 @@ export interface Position {
   error: string | null;
 }
 
-interface ReplacePositionInput {
+export interface ReplacePositionInput {
   ticker: string;
   shares: number;
 }
@@ -50,6 +50,8 @@ interface Store {
   setError: (id: string, error: string | null) => void;
   setPerf: (id: string, perf: PositionPerf) => void;
   resetMarketData: () => void;
+  clearAllocations: () => void;
+  clearEverything: () => void;
   replaceFromShareState: (budget: number | null, positions: ReplacePositionInput[]) => void;
 }
 
@@ -244,6 +246,15 @@ export const useTrancheStore = create<Store>()(
             loading: false,
             error: position.locked ? position.error : null,
           })),
+        })),
+      clearAllocations: () =>
+        set(() => ({
+          positions: [createEmptyPosition()],
+        })),
+      clearEverything: () =>
+        set(() => ({
+          budget: 0,
+          positions: [createEmptyPosition()],
         })),
       replaceFromShareState: (budget, positions) =>
         set(() => ({
