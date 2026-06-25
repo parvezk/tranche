@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-
 import { Button } from "@/components/ui/button";
 import { type Position } from "@/lib/store";
 
@@ -18,42 +16,13 @@ const NOTE_BUTTON_BASE =
 const NOTE_BUTTON_FILLED =
   "border-[var(--tranche-warning-border)] bg-[var(--tranche-warning-surface)] text-[var(--tranche-warning)]";
 const NOTE_BUTTON_EMPTY = "border-[var(--tranche-border-muted)] text-[var(--tranche-muted-strong)]";
-const POPOVER_WIDTH = 320;
 
 export function NotePopover({ position, isOpen, onToggle, onClose, onChange }: NotePopoverProps) {
   const hasNote = position.notes.length > 0;
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const updatePosition = () => {
-      const rect = buttonRef.current?.getBoundingClientRect();
-      if (!rect) return;
-
-      const viewportPadding = 12;
-      const left = Math.min(
-        Math.max(rect.right - POPOVER_WIDTH, viewportPadding),
-        window.innerWidth - POPOVER_WIDTH - viewportPadding,
-      );
-      const top = Math.min(rect.bottom + 10, window.innerHeight - 190);
-      setPopoverPosition({ top: Math.max(top, viewportPadding), left });
-    };
-
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
-    return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
-    };
-  }, [isOpen]);
 
   return (
     <div className="relative flex justify-center">
       <Button
-        ref={buttonRef}
         variant="ghost"
         size="icon-sm"
         onClick={onToggle}
@@ -65,10 +34,7 @@ export function NotePopover({ position, isOpen, onToggle, onClose, onChange }: N
         {hasNote && <span className="absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full bg-[var(--tranche-warning)]" />}
       </Button>
       {isOpen && (
-        <div
-          className="fixed z-50 w-80 rounded-sm border border-[var(--tranche-border-strong)] bg-[var(--tranche-popover)] p-3 shadow-2xl"
-          style={{ top: popoverPosition.top, left: popoverPosition.left }}
-        >
+        <div className="absolute right-0 top-10 z-50 w-80 rounded-sm border border-[var(--tranche-border-strong)] bg-[var(--tranche-popover)] p-3 shadow-2xl">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--tranche-muted)]">
               {position.ticker || "Position"} note
