@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getAllocationSnapshots } from "@/lib/server/allocations";
+import { formatSupabaseError, isSupabaseConfigError } from "@/lib/server/supabase-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +27,10 @@ export default async function HistoryRoute() {
   try {
     allocations = await getAllocationSnapshots();
   } catch (caught) {
-    error = caught instanceof Error ? caught.message : "Unable to load allocation history.";
+    error = formatSupabaseError(caught, "Unable to load allocation history.");
   }
+
+  const isConfigError = error ? isSupabaseConfigError(error) : false;
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#09090b] px-3 py-6 text-[#e4e4e7] sm:px-6 sm:py-8">
@@ -61,10 +64,17 @@ export default async function HistoryRoute() {
           {error ? (
             <div className="px-4 py-6">
               <p className="text-sm text-[#f87171]">{error}</p>
-              <p className="mt-2 text-sm text-[#a1a1aa]">
-                Add the Supabase table from <code>supabase/migrations</code>, then set{" "}
-                <code>SUPABASE_URL</code> and <code>SUPABASE_SERVICE_ROLE_KEY</code> in the environment.
-              </p>
+              {isConfigError ? (
+                <p className="mt-2 text-sm text-[#a1a1aa]">
+                  Add the Supabase table from <code>supabase/migrations</code>, then set{" "}
+                  <code>SUPABASE_URL</code> and <code>SUPABASE_SERVICE_ROLE_KEY</code> in the environment.
+                </p>
+              ) : (
+                <p className="mt-2 text-sm text-[#a1a1aa]">
+                  Your saved allocations are still in Supabase. The History page will recover once the database is
+                  available again.
+                </p>
+              )}
             </div>
           ) : allocations.length === 0 ? (
             <div className="px-4 py-10 text-center text-sm text-[#a1a1aa]">

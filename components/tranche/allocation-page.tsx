@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 
+import { MarketStrip } from "@/components/tranche/market-strip";
+import { NotePopover } from "@/components/tranche/note-popover";
+import { ShareInput } from "@/components/tranche/share-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -124,6 +127,9 @@ export default function Home() {
     setError,
     setPerf,
     resetMarketData,
+    clearAllocations,
+    clearUnlockedAllocations,
+    clearEverything,
     replaceFromShareState,
   } = useTrancheStore();
 
@@ -133,6 +139,8 @@ export default function Home() {
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [perfLoadingMap, setPerfLoadingMap] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
+  const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
   const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -405,22 +413,28 @@ export default function Home() {
     }, 130);
   }, []);
 
-  const handleShareChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>, positionId: string) => {
-      const next = Number.parseFloat(event.target.value);
-      setShares(positionId, Number.isFinite(next) && next >= 0 ? next : 0);
-    },
-    [setShares],
-  );
+  const requestReset = useCallback(() => {
+    const hasLockedPositions = useTrancheStore.getState().positions.some((position) => position.locked);
+    if (hasLockedPositions) {
+      setResetDialogOpen(true);
+      return;
+    }
 
-  const incrementShares = useCallback(
-    (position: Position, event: React.MouseEvent<HTMLButtonElement>, direction: -1 | 1) => {
-      const multiplier = event.ctrlKey || event.metaKey ? 100 : event.shiftKey ? 10 : 1;
-      const nextShares = Math.max(0, position.shares + direction * multiplier);
-      setShares(position.id, nextShares);
-    },
-    [setShares],
-  );
+    clearEverything();
+    toast.success("Allocation and proceeds reset");
+  }, [clearEverything]);
+
+  const resetKeepingLocked = useCallback(() => {
+    clearUnlockedAllocations();
+    setResetDialogOpen(false);
+    toast.success("Unlocked positions cleared");
+  }, [clearUnlockedAllocations]);
+
+  const resetIncludingLocked = useCallback(() => {
+    clearAllocations();
+    setResetDialogOpen(false);
+    toast.success("All positions cleared");
+  }, [clearAllocations]);
 
   const saveAllocation = useCallback(async () => {
     setSaving(true);
@@ -536,7 +550,7 @@ export default function Home() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4 sm:flex sm:items-start sm:gap-6 lg:gap-8">
+            <div className="grid grid-cols-2 gap-3 sm:flex sm:items-start sm:gap-4 lg:gap-5">
               <div className="text-right">
                 <p className="text-xs uppercase tracking-[0.16em] text-[#52525b]">Allocated</p>
                 <p
@@ -553,25 +567,36 @@ export default function Home() {
                   {currency.format(remaining)}
                 </p>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void saveAllocation()}
-                disabled={saving}
-                className="col-span-2 mt-0.5 w-full border-[#7c5412] bg-[#f59e0b] text-[#09090b] hover:bg-[#fbbf24] sm:col-span-1 sm:w-auto"
-              >
-                {saving ? "Saving..." : "Save"}
-              </Button>
+              <div className="col-span-2 flex gap-1 sm:col-span-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void saveAllocation()}
+                  disabled={saving}
+                  className="mt-0.5 flex-1 border-[#7c5412] bg-[#f59e0b] px-2.5 text-[#09090b] hover:bg-[#fbbf24] sm:flex-none"
+                >
+                  {saving ? "Saving..." : "Save"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={requestReset}
+                  className="mt-0.5 flex-1 border-[#3f3f46] bg-transparent px-2.5 text-[#f87171] hover:border-[#7f1d1d] hover:bg-[#2b1215] sm:flex-none"
+                >
+                  Reset
+                </Button>
+              </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => void copyShareLink()}
-                className="col-span-2 mt-0.5 w-full border-[#27272a] bg-transparent text-[#e4e4e7] hover:bg-[#202024] sm:col-span-1 sm:w-auto"
+                className="col-span-2 mt-0.5 w-full border-[#27272a] bg-transparent px-2.5 text-[#e4e4e7] hover:bg-[#202024] sm:col-span-1 sm:w-auto"
               >
                 Share
               </Button>
             </div>
           </div>
+          <MarketStrip />
           <Progress
             value={progressValue}
             className="h-[2px] rounded-none bg-[#27272a]"
@@ -580,7 +605,7 @@ export default function Home() {
         </header>
 
         <section className="overflow-x-auto rounded-sm border border-[#1a1a1e] bg-[#18181b]">
-          <div className="grid min-w-[1040px] grid-cols-[24px_28px_92px_minmax(240px,1fr)_148px_112px_88px_190px_64px] items-center gap-2 border-b border-[#27272a] bg-[#111113] px-2 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[#7d8592] sm:px-3">
+          <div className="grid min-w-[860px] grid-cols-[22px_26px_82px_minmax(190px,1fr)_130px_102px_78px_44px_44px] items-center gap-2 border-b border-[#27272a] bg-[#111113] px-2 py-3 text-[11px] font-bold uppercase tracking-[0.1em] text-[#7d8592] sm:px-3">
             <span className="text-center">#</span>
             <span className="text-center text-sm tracking-normal">✓</span>
             <span>Ticker</span>
@@ -588,8 +613,8 @@ export default function Home() {
             <span className="text-center">Shares</span>
             <span className="text-right">Total</span>
             <span className="text-center">% Budget</span>
-            <span>Notes</span>
-            <span className="text-center">Delete</span>
+            <span className="text-center">Note</span>
+            <span className="text-center">Del</span>
           </div>
 
           <div className="divide-y divide-[#1a1a1e]">
@@ -624,8 +649,8 @@ export default function Home() {
               ];
 
               return (
-                <div key={position.id} className="contents">
                 <div
+                  key={position.id}
                   draggable
                   onDragStart={(event) => {
                     event.dataTransfer.effectAllowed = "move";
@@ -638,7 +663,7 @@ export default function Home() {
                   onDragLeave={() => setDragOverId(null)}
                   onDrop={(event) => handleDrop(event, position.id)}
                   onDragEnd={() => setDragOverId(null)}
-                  className={`grid min-w-[1040px] cursor-grab grid-cols-[24px_28px_92px_minmax(240px,1fr)_148px_112px_88px_190px_64px] items-center gap-2 px-2 py-3 active:cursor-grabbing sm:px-3 ${
+                  className={`grid min-w-[860px] cursor-grab grid-cols-[22px_26px_82px_minmax(190px,1fr)_130px_102px_78px_44px_44px] items-center gap-2 px-2 py-3 active:cursor-grabbing sm:px-3 ${
                     dragOverId === position.id ? "bg-[#202024]" : position.locked ? "bg-[#111816]" : ""
                   }`}
                 >
@@ -735,35 +760,14 @@ export default function Home() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-[32px_1fr_32px] items-center gap-1">
-                    <Button
-                      variant="outline"
-                      size="icon-sm"
-                      disabled={position.locked}
-                      onClick={(event) => incrementShares(position, event, -1)}
-                      className="h-8 w-8 border-[#27272a] bg-[#09090b] text-[#e4e4e7] hover:bg-[#202024]"
-                    >
-                      -
-                    </Button>
-                    <Input
-                      ref={(node) => {
-                        shareInputRefs.current[position.id] = node;
-                      }}
-                      value={position.shares}
-                      disabled={position.locked}
-                      onChange={(event) => handleShareChange(event, position.id)}
-                      className="h-8 border-[#27272a] bg-[#09090b] px-2 text-center text-sm [font-family:var(--font-mono)] disabled:border-[#14532d] disabled:text-[#86efac]"
-                    />
-                    <Button
-                      variant="outline"
-                      size="icon-sm"
-                      disabled={position.locked}
-                      onClick={(event) => incrementShares(position, event, 1)}
-                      className="h-8 w-8 border-[#27272a] bg-[#09090b] text-[#e4e4e7] hover:bg-[#202024]"
-                    >
-                      +
-                    </Button>
-                  </div>
+                  <ShareInput
+                    value={position.shares}
+                    disabled={position.locked}
+                    inputRef={(node) => {
+                      shareInputRefs.current[position.id] = node;
+                    }}
+                    onChange={(shares) => setShares(position.id, shares)}
+                  />
 
                   <p className="text-right text-sm [font-family:var(--font-mono)]">{currency.format(total)}</p>
                   <div className="flex justify-center">
@@ -771,25 +775,23 @@ export default function Home() {
                       {pctBudget.toFixed(1)}%
                     </span>
                   </div>
-                  <textarea
-                    defaultValue={position.notes}
-                    maxLength={160}
-                    placeholder="Add note"
-                    disabled={position.locked}
-                    onBlur={(event) => setNotes(position.id, event.target.value)}
-                    className="h-12 resize-none rounded-sm border border-[#27272a] bg-[#09090b] px-2 py-1.5 text-xs leading-4 text-[#e4e4e7] outline-none placeholder:text-[#52525b] focus:border-[#f59e0b] disabled:border-[#14532d] disabled:text-[#86efac]"
+                  <NotePopover
+                    position={position}
+                    isOpen={activeNoteId === position.id}
+                    onToggle={() => setActiveNoteId((current) => (current === position.id ? null : position.id))}
+                    onClose={() => setActiveNoteId(null)}
+                    onChange={(notes) => setNotes(position.id, notes)}
                   />
                   <Button
                     variant="ghost"
                     size="icon-sm"
                     disabled={position.locked}
                     onClick={() => removePosition(position.id)}
-                    className="h-16 w-16 text-4xl leading-none text-[#a1a1aa] hover:bg-[#202024] hover:text-[#f87171]"
+                    className="h-8 w-8 text-2xl leading-none text-[#a1a1aa] hover:bg-[#202024] hover:text-[#f87171]"
                     aria-label="Remove position"
                   >
                     ×
                   </Button>
-                </div>
                 </div>
               );
             })}
@@ -809,6 +811,40 @@ export default function Home() {
           </div>
         </section>
       </div>
+      {resetDialogOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setResetDialogOpen(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reset-title"
+            className="w-full max-w-md rounded-sm border border-[var(--tranche-border-strong)] bg-[var(--tranche-panel)] p-5 shadow-2xl"
+          >
+            <p id="reset-title" className="text-lg font-semibold text-[#f4f4f5]">
+              Reset allocation?
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[var(--tranche-muted)]">
+              This allocation contains locked positions. Your proceeds budget will be preserved either way.
+            </p>
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button variant="ghost" onClick={() => setResetDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="outline" onClick={resetKeepingLocked} className="border-[var(--tranche-border-strong)]">
+                Keep locked
+              </Button>
+              <Button variant="destructive" onClick={resetIncludingLocked}>
+                Clear all positions
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

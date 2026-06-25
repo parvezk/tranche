@@ -51,6 +51,7 @@ interface Store {
   setPerf: (id: string, perf: PositionPerf) => void;
   resetMarketData: () => void;
   clearAllocations: () => void;
+  clearUnlockedAllocations: () => void;
   clearEverything: () => void;
   replaceFromShareState: (budget: number | null, positions: ReplacePositionInput[]) => void;
 }
@@ -251,6 +252,13 @@ export const useTrancheStore = create<Store>()(
         set(() => ({
           positions: [createEmptyPosition()],
         })),
+      clearUnlockedAllocations: () =>
+        set((state) => {
+          const lockedPositions = state.positions.filter((position) => position.locked);
+          return {
+            positions: lockedPositions.length > 0 ? lockedPositions : [createEmptyPosition()],
+          };
+        }),
       clearEverything: () =>
         set(() => ({
           budget: 0,
