@@ -141,6 +141,7 @@ export default function Home() {
   const [saving, setSaving] = useState(false);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [pricePopoverPosition, setPricePopoverPosition] = useState({ top: 0, left: 0 });
 
   const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -385,9 +386,15 @@ export default function Home() {
   );
 
   const handlePositionMouseEnter = useCallback(
-    (position: Position) => {
+    (position: Position, anchor: HTMLElement) => {
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
       if (openTimerRef.current) clearTimeout(openTimerRef.current);
+      const rect = anchor.getBoundingClientRect();
+      const viewportPadding = 12;
+      setPricePopoverPosition({
+        top: Math.min(rect.bottom + 8, window.innerHeight - 270),
+        left: Math.min(Math.max(rect.left, viewportPadding), window.innerWidth - 268),
+      });
       openTimerRef.current = setTimeout(() => {
         setActivePopoverId(position.id);
         void fetchPerf(position);
@@ -604,8 +611,8 @@ export default function Home() {
           />
         </header>
 
-        <section className="overflow-x-auto rounded-sm border border-[#1a1a1e] bg-[#18181b]">
-          <div className="grid min-w-[860px] grid-cols-[22px_26px_82px_minmax(190px,1fr)_130px_102px_78px_44px_44px] items-center gap-2 border-b border-[#27272a] bg-[#111113] px-2 py-3 text-[11px] font-bold uppercase tracking-[0.1em] text-[#7d8592] sm:px-3">
+        <section className="overflow-x-auto overflow-y-hidden rounded-sm border border-[#1a1a1e] bg-[#18181b]">
+          <div className="grid min-w-[872px] grid-cols-[22px_26px_82px_minmax(190px,1fr)_130px_102px_78px_44px_56px] items-center gap-2 border-b border-[#27272a] bg-[#111113] px-2 py-3 text-[11px] font-bold uppercase tracking-[0.1em] text-[#d4d4d8] sm:px-3">
             <span className="text-center">#</span>
             <span className="text-center text-sm tracking-normal">✓</span>
             <span>Ticker</span>
@@ -663,7 +670,7 @@ export default function Home() {
                   onDragLeave={() => setDragOverId(null)}
                   onDrop={(event) => handleDrop(event, position.id)}
                   onDragEnd={() => setDragOverId(null)}
-                  className={`grid min-w-[860px] cursor-grab grid-cols-[22px_26px_82px_minmax(190px,1fr)_130px_102px_78px_44px_44px] items-center gap-2 px-2 py-3 active:cursor-grabbing sm:px-3 ${
+                  className={`grid min-w-[872px] cursor-grab grid-cols-[22px_26px_82px_minmax(190px,1fr)_130px_102px_78px_44px_56px] items-center gap-2 px-2 py-3 active:cursor-grabbing sm:px-3 ${
                     dragOverId === position.id ? "bg-[#202024]" : position.locked ? "bg-[#111816]" : ""
                   }`}
                 >
@@ -694,7 +701,7 @@ export default function Home() {
 
                   <div
                     className="relative"
-                    onMouseEnter={() => handlePositionMouseEnter(position)}
+                    onMouseEnter={(event) => handlePositionMouseEnter(position, event.currentTarget)}
                     onMouseLeave={handlePositionMouseLeave}
                   >
                     {position.loading ? (
@@ -732,7 +739,8 @@ export default function Home() {
 
                     {showPopover && (
                       <div
-                        className="absolute left-0 top-[calc(100%+8px)] z-20 w-64 rounded-sm border border-[#27272a] bg-[#121214] p-3 shadow-xl"
+                        className="fixed z-50 w-64 rounded-sm border border-[#27272a] bg-[#121214] p-3 shadow-xl"
+                        style={{ top: pricePopoverPosition.top, left: pricePopoverPosition.left }}
                         onMouseEnter={handlePopoverMouseEnter}
                         onMouseLeave={handlePopoverMouseLeave}
                       >
@@ -787,7 +795,7 @@ export default function Home() {
                     size="icon-sm"
                     disabled={position.locked}
                     onClick={() => removePosition(position.id)}
-                    className="h-8 w-8 text-2xl leading-none text-[#a1a1aa] hover:bg-[#202024] hover:text-[#f87171]"
+                    className="h-10 w-10 justify-self-center text-3xl leading-none text-[#c4c4cc] hover:bg-[#202024] hover:text-[#f87171]"
                     aria-label="Remove position"
                   >
                     ×
