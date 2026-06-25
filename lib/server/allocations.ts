@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/server/supabase";
+import { formatSupabaseError } from "@/lib/server/supabase-errors";
 import { type Position } from "@/lib/store";
 
 export interface AllocationSnapshot {
@@ -38,7 +39,7 @@ export async function saveAllocationSnapshot(input: {
     .single();
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(formatSupabaseError(error, "Unable to save allocation."));
   }
 
   return data as AllocationSnapshot;
@@ -54,7 +55,7 @@ export async function getAllocationSnapshots() {
     .limit(50);
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(formatSupabaseError(error, "Unable to load allocation history."));
   }
 
   return (data ?? []) as AllocationSnapshot[];
