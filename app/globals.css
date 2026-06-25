@@ -24,6 +24,22 @@
     --input: 39 39 42;
     --ring: 245 158 11;
     --radius: 0.375rem;
+    --tranche-page: #09090b;
+    --tranche-panel: #18181b;
+    --tranche-popover: #121214;
+    --tranche-hover: #202024;
+    --tranche-border-muted: #27272a;
+    --tranche-border-strong: #3f3f46;
+    --tranche-text: #e4e4e7;
+    --tranche-muted: #a1a1aa;
+    --tranche-muted-strong: #71717a;
+    --tranche-warning: #f59e0b;
+    --tranche-warning-border: #7c5412;
+    --tranche-warning-surface: #2f230f;
+    --tranche-danger: #f87171;
+    --tranche-success: #4ade80;
+    --tranche-success-border: #14532d;
+    --tranche-success-soft: #86efac;
   }
 
   * {

@@ -1,12 +1,8 @@
 import { fetchYahooChartResult } from "@/lib/server/yahoo";
 import { isNumber } from "@/lib/utils";
+import { type MarketDefinition, type MarketQuote } from "@/lib/utils/market-strip";
 
 export const dynamic = "force-dynamic";
-
-interface MarketDefinition {
-  symbol: string;
-  label: string;
-}
 
 interface MarketMeta {
   regularMarketPrice?: number;
@@ -33,7 +29,8 @@ const ETFS: MarketDefinition[] = [
   { symbol: "EEM", label: "EEM" },
 ];
 
-async function fetchMarketQuote(definition: MarketDefinition) {
+// Normalize a Yahoo chart response into the compact quote shape consumed by the header strip.
+async function fetchMarketQuote(definition: MarketDefinition): Promise<MarketQuote> {
   const result = await fetchYahooChartResult(definition.symbol, { interval: "1d", range: "1d" });
   const meta = (result?.meta as MarketMeta | undefined) ?? null;
   const price = meta?.regularMarketPrice;
@@ -51,11 +48,15 @@ async function fetchMarketQuote(definition: MarketDefinition) {
   };
 }
 
+async function fetchQuoteGroup(definitions: MarketDefinition[]) {
+  return Promise.all(definitions.map(fetchMarketQuote));
+}
+
+// Serves both index and ETF quote groups in one request so the client can toggle instantly.
 export async function GET() {
-  const [indexes, etfs] = await Promise.all([
-    Promise.all(INDEXES.map(fetchMarketQuote)),
-    Promise.all(ETFS.map(fetchMarketQuote)),
-  ]);
+  const indexesPromise = fetchQuoteGroup(INDEXES);
+  const etfsPromise = fetchQuoteGroup(ETFS);
+  const [indexes, etfs] = await Promise.all([indexesPromise, etfsPromise]);
 
   return Response.json(
     { indexes, etfs },

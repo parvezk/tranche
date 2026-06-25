@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { getAllocationSnapshots } from "@/lib/server/allocations";
-import { formatSupabaseError } from "@/lib/server/supabase-errors";
+import { formatSupabaseError, isSupabaseConfigError } from "@/lib/server/supabase-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +30,7 @@ export default async function HistoryRoute() {
     error = formatSupabaseError(caught, "Unable to load allocation history.");
   }
 
-  const isConfigError = error?.toLowerCase().includes("supabase is not configured") ?? false;
+  const isConfigError = error ? isSupabaseConfigError(error) : false;
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#09090b] px-3 py-6 text-[#e4e4e7] sm:px-6 sm:py-8">

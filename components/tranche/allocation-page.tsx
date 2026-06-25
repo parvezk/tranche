@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 
 import { MarketStrip } from "@/components/tranche/market-strip";
+import { NotePopover } from "@/components/tranche/note-popover";
 import { ShareInput } from "@/components/tranche/share-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -774,52 +775,13 @@ export default function Home() {
                       {pctBudget.toFixed(1)}%
                     </span>
                   </div>
-                  <div className="relative flex justify-center">
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => setActiveNoteId((current) => (current === position.id ? null : position.id))}
-                      className={`relative h-8 w-8 border ${
-                        position.notes
-                          ? "border-[#7c5412] bg-[#2f230f] text-[#f59e0b]"
-                          : "border-[#27272a] text-[#71717a]"
-                      } hover:bg-[#202024] hover:text-[#f59e0b]`}
-                      aria-label={position.notes ? "Open position note" : "Add position note"}
-                      aria-expanded={activeNoteId === position.id}
-                    >
-                      <span aria-hidden="true">✎</span>
-                      {position.notes && (
-                        <span className="absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full bg-[#f59e0b]" />
-                      )}
-                    </Button>
-                    {activeNoteId === position.id && (
-                      <div className="absolute right-0 top-10 z-30 w-64 rounded-sm border border-[#3f3f46] bg-[#121214] p-3 shadow-2xl">
-                        <div className="mb-2 flex items-center justify-between">
-                          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#a1a1aa]">
-                            {position.ticker || "Position"} note
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => setActiveNoteId(null)}
-                            className="px-1 text-lg leading-none text-[#71717a] hover:text-[#e4e4e7]"
-                            aria-label="Close note"
-                          >
-                            ×
-                          </button>
-                        </div>
-                        <textarea
-                          value={position.notes}
-                          maxLength={160}
-                          placeholder="Add note"
-                          disabled={position.locked}
-                          autoFocus={!position.locked}
-                          onChange={(event) => setNotes(position.id, event.target.value)}
-                          className="h-24 w-full resize-none rounded-sm border border-[#27272a] bg-[#09090b] px-2 py-2 text-xs leading-4 text-[#e4e4e7] outline-none placeholder:text-[#52525b] focus:border-[#f59e0b] disabled:border-[#14532d] disabled:text-[#86efac]"
-                        />
-                        <p className="mt-1 text-right text-[10px] text-[#52525b]">{position.notes.length}/160</p>
-                      </div>
-                    )}
-                  </div>
+                  <NotePopover
+                    position={position}
+                    isOpen={activeNoteId === position.id}
+                    onToggle={() => setActiveNoteId((current) => (current === position.id ? null : position.id))}
+                    onClose={() => setActiveNoteId(null)}
+                    onChange={(notes) => setNotes(position.id, notes)}
+                  />
                   <Button
                     variant="ghost"
                     size="icon-sm"
@@ -861,19 +823,19 @@ export default function Home() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="reset-title"
-            className="w-full max-w-md rounded-sm border border-[#3f3f46] bg-[#18181b] p-5 shadow-2xl"
+            className="w-full max-w-md rounded-sm border border-[var(--tranche-border-strong)] bg-[var(--tranche-panel)] p-5 shadow-2xl"
           >
             <p id="reset-title" className="text-lg font-semibold text-[#f4f4f5]">
               Reset allocation?
             </p>
-            <p className="mt-2 text-sm leading-6 text-[#a1a1aa]">
+            <p className="mt-2 text-sm leading-6 text-[var(--tranche-muted)]">
               This allocation contains locked positions. Your proceeds budget will be preserved either way.
             </p>
             <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button variant="ghost" onClick={() => setResetDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button variant="outline" onClick={resetKeepingLocked} className="border-[#3f3f46]">
+              <Button variant="outline" onClick={resetKeepingLocked} className="border-[var(--tranche-border-strong)]">
                 Keep locked
               </Button>
               <Button variant="destructive" onClick={resetIncludingLocked}>

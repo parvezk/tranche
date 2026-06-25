@@ -8,6 +8,14 @@ const HTML_ERROR_PATTERNS = [
   /gateway timeout/i,
 ];
 
+const CONFIG_ERROR_PATTERNS = [
+  /supabase is not configured/i,
+  /allocation_snapshots/i,
+  /relation .* does not exist/i,
+  /schema cache/i,
+  /could not find the table/i,
+];
+
 const MAX_ERROR_LENGTH = 220;
 
 export const SUPABASE_UNAVAILABLE_MESSAGE =
@@ -36,6 +44,10 @@ export function getErrorMessage(error: unknown): string {
 
 export function isSupabaseUnavailableError(message: string) {
   return HTML_ERROR_PATTERNS.some((pattern) => pattern.test(message));
+}
+
+export function isSupabaseConfigError(message: string) {
+  return CONFIG_ERROR_PATTERNS.some((pattern) => pattern.test(message));
 }
 
 export function formatSupabaseError(error: unknown, fallback: string) {

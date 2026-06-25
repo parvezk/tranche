@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatShareDraft } from "@/lib/utils/shares";
 
 interface ShareInputProps {
   value: number;
@@ -12,10 +13,7 @@ interface ShareInputProps {
   onChange: (value: number) => void;
 }
 
-function formatShareDraft(value: number) {
-  return Number.isFinite(value) ? String(value) : "0";
-}
-
+// Keeps fractional share drafts editable while syncing valid numbers back to allocation state.
 export function ShareInput({ value, disabled, inputRef, onChange }: ShareInputProps) {
   const [draft, setDraft] = useState(() => formatShareDraft(value));
   const focusedRef = useRef(false);
