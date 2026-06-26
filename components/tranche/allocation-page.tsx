@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { PreviewCard } from "@base-ui/react/preview-card";
 import { toast } from "sonner";
 
 import { MarketStrip } from "@/components/tranche/market-strip";
@@ -142,8 +143,6 @@ export default function Home() {
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
-  const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tickerInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const shareInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const priceRequestSeqRef = useRef<Record<string, number>>({});
@@ -167,17 +166,6 @@ export default function Home() {
   const progressRatio = budget > 0 ? allocated / budget : 0;
   const progressValue = Math.max(0, Math.min(progressRatio * 100, 100));
   const progressColorClass = getProgressColor(progressRatio);
-
-  const clearTimers = useCallback(() => {
-    if (openTimerRef.current) {
-      clearTimeout(openTimerRef.current);
-      openTimerRef.current = null;
-    }
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current);
-      closeTimerRef.current = null;
-    }
-  }, []);
 
   const fetchPrice = useCallback(
     async (positionId: string, ticker: string) => {
@@ -333,12 +321,6 @@ export default function Home() {
     });
   }, [fetchPrice, hasHydrated, replaceFromShareState, resetMarketData]);
 
-  useEffect(() => {
-    return () => {
-      clearTimers();
-    };
-  }, [clearTimers]);
-
   const commitBudgetEdit = useCallback(() => {
     const parsed = Number.parseFloat(budgetDraft.replace(/[$, ]/g, ""));
     if (Number.isFinite(parsed)) {
@@ -383,35 +365,6 @@ export default function Home() {
     },
     [fetchPrice],
   );
-
-  const handlePositionMouseEnter = useCallback(
-    (position: Position) => {
-      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-      if (openTimerRef.current) clearTimeout(openTimerRef.current);
-      openTimerRef.current = setTimeout(() => {
-        setActivePopoverId(position.id);
-        void fetchPerf(position);
-      }, 180);
-    },
-    [fetchPerf],
-  );
-
-  const handlePositionMouseLeave = useCallback(() => {
-    if (openTimerRef.current) clearTimeout(openTimerRef.current);
-    closeTimerRef.current = setTimeout(() => {
-      setActivePopoverId(null);
-    }, 130);
-  }, []);
-
-  const handlePopoverMouseEnter = useCallback(() => {
-    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-  }, []);
-
-  const handlePopoverMouseLeave = useCallback(() => {
-    closeTimerRef.current = setTimeout(() => {
-      setActivePopoverId(null);
-    }, 130);
-  }, []);
 
   const requestReset = useCallback(() => {
     const hasLockedPositions = useTrancheStore.getState().positions.some((position) => position.locked);
@@ -693,73 +646,92 @@ export default function Home() {
                     className="h-9 border-[#27272a] bg-[#09090b] px-2 text-center text-base font-semibold uppercase text-[#f59e0b] [font-family:var(--font-mono)] placeholder:text-[#3f3f46] disabled:border-[#14532d] disabled:text-[#86efac]"
                   />
 
-                  <div
-                    className="relative"
-                    onMouseEnter={() => handlePositionMouseEnter(position)}
-                    onMouseLeave={handlePositionMouseLeave}
+                  <PreviewCard.Root
+                    open={showPopover}
+                    onOpenChange={(open) => {
+                      if (open) {
+                        if (typeof displayPrice === "number" && !position.error) {
+                          setActivePopoverId(position.id);
+                          void fetchPerf(position);
+                        }
+                        return;
+                      }
+                      setActivePopoverId((current) => (current === position.id ? null : current));
+                    }}
                   >
-                    {position.loading ? (
-                      <div className="space-y-2 py-0.5">
-                        <Skeleton className="h-3 w-44 bg-[#27272a]" />
-                        <Skeleton className="h-3 w-28 bg-[#27272a]" />
-                      </div>
-                    ) : position.error ? (
-                      <p className="text-sm text-[#f87171]">{position.error}</p>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <div className="min-w-0">
-                          <p className="truncate text-xs font-medium text-[#ffffff]">
-                            {position.name || (position.ticker ? "Waiting for quote" : "Enter ticker")}
-                          </p>
-                          {typeof displayPrice === "number" ? (
-                            <p className="mt-0.5 flex items-center gap-2 text-sm [font-family:var(--font-mono)]">
-                              <span className={position.locked ? "text-[#86efac]" : "text-[#4ade80]"}>
-                                {currency.format(displayPrice)}
-                              </span>
-                              <span className={perfColor(position.changePct1D)}>{formatSignedPct(position.changePct1D)}</span>
-                              <span className="text-[#52525b]">...</span>
-                              {position.locked && (
-                                <span className="rounded-sm border border-[#14532d] px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-[#86efac]">
-                                  Locked
-                                </span>
-                              )}
-                            </p>
+                    <PreviewCard.Trigger
+                      delay={180}
+                      closeDelay={130}
+                      render={
+                        <div>
+                          {position.loading ? (
+                            <div className="space-y-2 py-0.5">
+                              <Skeleton className="h-3 w-44 bg-[#27272a]" />
+                              <Skeleton className="h-3 w-28 bg-[#27272a]" />
+                            </div>
+                          ) : position.error ? (
+                            <p className="text-sm text-[#f87171]">{position.error}</p>
                           ) : (
-                            <p className="mt-0.5 text-sm text-[#52525b] [font-family:var(--font-mono)]">--</p>
+                            <div className="flex items-center gap-2">
+                              <div className="min-w-0">
+                                <p className="truncate text-xs font-medium text-[#ffffff]">
+                                  {position.name || (position.ticker ? "Waiting for quote" : "Enter ticker")}
+                                </p>
+                                {typeof displayPrice === "number" ? (
+                                  <p className="mt-0.5 flex items-center gap-2 text-sm [font-family:var(--font-mono)]">
+                                    <span className={position.locked ? "text-[#86efac]" : "text-[#4ade80]"}>
+                                      {currency.format(displayPrice)}
+                                    </span>
+                                    <span className={perfColor(position.changePct1D)}>
+                                      {formatSignedPct(position.changePct1D)}
+                                    </span>
+                                    <span className="text-[#52525b]">...</span>
+                                    {position.locked && (
+                                      <span className="rounded-sm border border-[#14532d] px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-[#86efac]">
+                                        Locked
+                                      </span>
+                                    )}
+                                  </p>
+                                ) : (
+                                  <p className="mt-0.5 text-sm text-[#52525b] [font-family:var(--font-mono)]">--</p>
+                                )}
+                              </div>
+                            </div>
                           )}
                         </div>
-                      </div>
-                    )}
-
-                    {showPopover && (
-                      <div
-                        className="absolute left-0 top-[calc(100%+8px)] z-50 w-64 rounded-sm border border-[#27272a] bg-[#121214] p-3 shadow-xl"
-                        onMouseEnter={handlePopoverMouseEnter}
-                        onMouseLeave={handlePopoverMouseLeave}
-                      >
-                        <p className="text-lg text-[#e4e4e7] [font-family:var(--font-mono)]">
-                          {currency.format(displayPrice ?? 0)}
-                        </p>
-                        <p className={`mt-1 text-sm ${perfColor(position.changePct1D)}`}>
-                          {typeof position.changePct1D === "number"
-                            ? `${position.changePct1D >= 0 ? "▲" : "▼"} ${formatSignedPct(position.changePct1D)} today`
-                            : "-- today"}
-                        </p>
-                        <div className="mt-3 space-y-2">
-                          {perfRows.map((row) => (
-                            <div key={row.label} className="grid grid-cols-[24px_44px_1fr] items-center gap-2 text-xs">
-                              <span className="text-[#a1a1aa]">{row.label}</span>
-                              {row.loading ? <Skeleton className="h-1.5 w-11 bg-[#27272a]" /> : <PerfBar value={row.value} />}
-                              <span className={`text-right [font-family:var(--font-mono)] ${perfColor(row.value)}`}>
-                                {row.loading ? <Skeleton className="ml-auto h-3 w-12 bg-[#27272a]" /> : formatSignedPct(row.value)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                        <p className="mt-3 text-[11px] text-[#52525b]">Prices may be delayed</p>
-                      </div>
-                    )}
-                  </div>
+                      }
+                    />
+                    <PreviewCard.Portal>
+                      <PreviewCard.Positioner side="bottom" align="start" sideOffset={8} collisionPadding={12}>
+                        <PreviewCard.Popup className="z-50 w-64 rounded-sm border border-[#27272a] bg-[#121214] p-3 shadow-xl">
+                          <p className="text-lg text-[#e4e4e7] [font-family:var(--font-mono)]">
+                            {currency.format(displayPrice ?? 0)}
+                          </p>
+                          <p className={`mt-1 text-sm ${perfColor(position.changePct1D)}`}>
+                            {typeof position.changePct1D === "number"
+                              ? `${position.changePct1D >= 0 ? "▲" : "▼"} ${formatSignedPct(position.changePct1D)} today`
+                              : "-- today"}
+                          </p>
+                          <div className="mt-3 space-y-2">
+                            {perfRows.map((row) => (
+                              <div key={row.label} className="grid grid-cols-[24px_44px_1fr] items-center gap-2 text-xs">
+                                <span className="text-[#a1a1aa]">{row.label}</span>
+                                {row.loading ? <Skeleton className="h-1.5 w-11 bg-[#27272a]" /> : <PerfBar value={row.value} />}
+                                <span className={`text-right [font-family:var(--font-mono)] ${perfColor(row.value)}`}>
+                                  {row.loading ? (
+                                    <Skeleton className="ml-auto h-3 w-12 bg-[#27272a]" />
+                                  ) : (
+                                    formatSignedPct(row.value)
+                                  )}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="mt-3 text-[11px] text-[#52525b]">Prices may be delayed</p>
+                        </PreviewCard.Popup>
+                      </PreviewCard.Positioner>
+                    </PreviewCard.Portal>
+                  </PreviewCard.Root>
 
                   <ShareInput
                     value={position.shares}
