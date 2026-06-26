@@ -29,6 +29,6 @@ export function formatSignedNumber(value: number | null, suffix = "") {
 }
 
 export function getMarketMovementClass(change: number | null) {
-  if (typeof change !== "number") return "text-[var(--tranche-muted-strong)]";
-  return change >= 0 ? "text-[var(--tranche-success)]" : "text-[var(--tranche-danger)]";
+  if (typeof change !== "number") return "market-movement-flat";
+  return change >= 0 ? "market-movement-up" : "market-movement-down";
 }

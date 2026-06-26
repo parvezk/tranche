@@ -55,7 +55,10 @@ export function MarketStrip() {
   const showLoadingSkeletons = loading && visibleQuotes.length === 0;
 
   return (
-    <div className="border-t border-[var(--tranche-border-muted)] bg-[#111113] px-3 py-2 sm:px-4">
+    <div className="relative border-t border-[var(--tranche-border-muted)] bg-[#111113] px-3 py-2 sm:px-4">
+      <p className="absolute right-3 top-0 -translate-y-1/2 bg-[var(--tranche-panel)] px-2 text-[9px] uppercase tracking-[0.08em] text-[var(--tranche-border-strong)] sm:right-4">
+        Refreshes every 30s · Quotes may be delayed
+      </p>
       <div className="flex min-w-0 items-stretch gap-2">
         <div
           className="grid min-w-0 flex-1 divide-x divide-[var(--tranche-border-muted)]"
@@ -78,7 +81,7 @@ export function MarketStrip() {
                     <p className="mt-0.5 truncate text-xs text-[#f4f4f5] [font-family:var(--font-mono)]">
                       {typeof quote.price === "number" ? priceNumber.format(quote.price) : "--"}
                     </p>
-                    <p className={`truncate text-[10px] [font-family:var(--font-mono)] ${movementClass}`}>
+                    <p className={`truncate text-[10px] font-semibold [font-family:var(--font-mono)] ${movementClass}`}>
                       {formatSignedNumber(quote.change)} · {formatSignedNumber(quote.changePct, "%")}
                     </p>
                   </div>
@@ -95,9 +98,6 @@ export function MarketStrip() {
           Show {mode === "indexes" ? MARKET_STRIP_LABELS.etfs : MARKET_STRIP_LABELS.indexes}
         </Button>
       </div>
-      <p className="mt-1 text-right text-[9px] uppercase tracking-[0.08em] text-[var(--tranche-border-strong)]">
-        Refreshes every 30s · Quotes may be delayed
-      </p>
     </div>
   );
 }

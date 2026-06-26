@@ -56,3 +56,15 @@
     font-family: var(--font-ui), sans-serif;
   }
 }
+
+.market-movement-up {
+  color: var(--tranche-success);
+}
+
+.market-movement-down {
+  color: var(--tranche-danger);
+}
+
+.market-movement-flat {
+  color: var(--tranche-muted-strong);
+}
