@@ -1,4 +1,17 @@
 /** @type {import('next').NextConfig} */
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self'",
+  "connect-src 'self'",
+  "frame-ancestors 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+].join("; ");
+
 const nextConfig = {
   async headers() {
     return [
@@ -10,8 +23,8 @@ const nextConfig = {
             value: 'on'
           },
           {
-            key: 'X-XSS-Protection',
-            value: '0'
+            key: 'Content-Security-Policy',
+            value: contentSecurityPolicy
           },
           {
             key: 'X-Frame-Options',

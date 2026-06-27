@@ -1,3 +1,4 @@
+import { sanitizeDisplayText } from "@/lib/sanitize";
 import { isNumber } from "@/lib/utils";
 import { getChartDataFromRequest } from "@/lib/server/api-helpers";
 
@@ -29,7 +30,7 @@ export async function GET(req: Request) {
   return Response.json(
     {
       ticker,
-      name: meta.longName ?? meta.shortName ?? ticker,
+      name: sanitizeDisplayText(meta.longName ?? meta.shortName ?? ticker, 120),
       price,
       changePct1D,
     },

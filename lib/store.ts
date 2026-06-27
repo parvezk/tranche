@@ -1,5 +1,6 @@
 "use client";
 
+import { sanitizeDisplayText } from "@/lib/sanitize";
 import { nanoid } from "nanoid";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
@@ -77,7 +78,7 @@ const normalizePosition = (position: Partial<Position>): Position => ({
   ...position,
   id: typeof position.id === "string" && position.id ? position.id : nanoid(),
   ticker: typeof position.ticker === "string" ? position.ticker : "",
-  name: typeof position.name === "string" ? position.name : "",
+  name: typeof position.name === "string" ? sanitizeDisplayText(position.name, 120) : "",
   price: typeof position.price === "number" ? position.price : null,
   lockedPrice: typeof position.lockedPrice === "number" ? position.lockedPrice : null,
   lockedAt: typeof position.lockedAt === "string" ? position.lockedAt : null,
@@ -85,7 +86,7 @@ const normalizePosition = (position: Partial<Position>): Position => ({
   changePct1D: typeof position.changePct1D === "number" ? position.changePct1D : null,
   perf: position.perf ?? null,
   shares: typeof position.shares === "number" && position.shares >= 0 ? position.shares : 0,
-  notes: typeof position.notes === "string" ? position.notes : "",
+  notes: typeof position.notes === "string" ? sanitizeDisplayText(position.notes, 160) : "",
   loading: false,
   error: typeof position.error === "string" ? position.error : null,
 });

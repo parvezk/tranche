@@ -1,3 +1,5 @@
+import { sanitizeDisplayText } from "@/lib/sanitize";
+
 const HTML_ERROR_PATTERNS = [
   /<!doctype html/i,
   /<html[\s>]/i,
@@ -61,9 +63,14 @@ export function formatSupabaseError(error: unknown, fallback: string) {
     return SUPABASE_UNAVAILABLE_MESSAGE;
   }
 
-  if (message.length > MAX_ERROR_LENGTH) {
-    return `${fallback} ${message.slice(0, MAX_ERROR_LENGTH).trim()}...`;
+  const safeMessage = sanitizeDisplayText(message, MAX_ERROR_LENGTH);
+  if (safeMessage.length === 0) {
+    return fallback;
   }
 
-  return message;
+  if (message.length > MAX_ERROR_LENGTH) {
+    return `${fallback} ${safeMessage}`;
+  }
+
+  return safeMessage;
 }
