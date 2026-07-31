@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type Position, type PositionPerf, useTrancheStore } from "@/lib/store";
+import { perfColor } from "@/lib/utils";
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -77,10 +78,6 @@ function parseUrlState(search: string): { budget: number | null; positions: Arra
   return { budget, positions: shares };
 }
 
-function perfColor(value: number | null) {
-  if (typeof value !== "number") return "text-[#e4e4e7]";
-  return value >= 0 ? "text-[#4ade80]" : "text-[#f87171]";
-}
 
 function PerfBar({ value }: { value: number | null }) {
   if (typeof value !== "number") {
