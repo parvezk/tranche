@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type Position, type PositionPerf, useTrancheStore } from "@/lib/store";
+import { formatSignedPct } from "@/lib/utils";
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -24,14 +25,6 @@ const budgetNumber = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 0,
   maximumFractionDigits: 2,
 });
-
-function formatSignedPct(value: number | null) {
-  if (typeof value !== "number") {
-    return "--";
-  }
-  const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(2)}%`;
-}
 
 function parseUrlState(search: string): { budget: number | null; positions: Array<{ ticker: string; shares: number }> } | null {
   const params = new URLSearchParams(search);
