@@ -12,26 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type Position, type PositionPerf, useTrancheStore } from "@/lib/store";
-
-const currency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-const budgetNumber = new Intl.NumberFormat("en-US", {
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
-});
-
-function formatSignedPct(value: number | null) {
-  if (typeof value !== "number") {
-    return "--";
-  }
-  const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(2)}%`;
-}
+import { currency, budgetNumber, formatSignedPct, perfColor } from "@/lib/utils";
 
 function parseUrlState(search: string): { budget: number | null; positions: Array<{ ticker: string; shares: number }> } | null {
   const params = new URLSearchParams(search);
@@ -75,11 +56,6 @@ function parseUrlState(search: string): { budget: number | null; positions: Arra
   }
 
   return { budget, positions: shares };
-}
-
-function perfColor(value: number | null) {
-  if (typeof value !== "number") return "text-[#e4e4e7]";
-  return value >= 0 ? "text-[#4ade80]" : "text-[#f87171]";
 }
 
 function PerfBar({ value }: { value: number | null }) {
