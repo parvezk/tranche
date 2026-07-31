@@ -9,29 +9,12 @@ import { NotePopover } from "@/components/tranche/note-popover";
 import { ShareInput } from "@/components/tranche/share-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PerfBar } from "@/components/perf-bar";
+import { currency, budgetNumber, formatSignedPct, perfColor } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type Position, type PositionPerf, useTrancheStore } from "@/lib/store";
 
-const currency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-const budgetNumber = new Intl.NumberFormat("en-US", {
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
-});
-
-function formatSignedPct(value: number | null) {
-  if (typeof value !== "number") {
-    return "--";
-  }
-  const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(2)}%`;
-}
 
 function parseUrlState(search: string): { budget: number | null; positions: Array<{ ticker: string; shares: number }> } | null {
   const params = new URLSearchParams(search);
@@ -77,23 +60,6 @@ function parseUrlState(search: string): { budget: number | null; positions: Arra
   return { budget, positions: shares };
 }
 
-function perfColor(value: number | null) {
-  if (typeof value !== "number") return "text-[#e4e4e7]";
-  return value >= 0 ? "text-[#4ade80]" : "text-[#f87171]";
-}
-
-function PerfBar({ value }: { value: number | null }) {
-  if (typeof value !== "number") {
-    return <div className="h-1.5 w-11 rounded bg-[#27272a]" />;
-  }
-  const width = Math.min(Math.abs(value), 30) / 30;
-  const color = value >= 0 ? "bg-[#4ade80]" : "bg-[#f87171]";
-  return (
-    <div className="h-1.5 w-11 rounded bg-[#27272a]">
-      <div className={`h-full rounded ${color}`} style={{ width: `${Math.max(width * 100, 4)}%` }} />
-    </div>
-  );
-}
 
 
 const BUDGET_WARNING_THRESHOLD = 0.88;
