@@ -1,0 +1,5 @@
+🧪 [testing improvement] Add tests for utility functions
+
+🎯 What: The project lacked unit tests for general utility functions defined in `lib/utils.ts` (e.g., `cn`, `isNumber`, currency formatters).
+📊 Coverage: Added unit tests using `bun:test` to cover all exported functions and constants in `lib/utils.ts`, including happy paths and edge cases (NaN, Infinity, null inputs).
+✨ Result: Improved overall test coverage and reliability for core utility operations.
