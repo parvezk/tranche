@@ -33,7 +33,12 @@ function formatSignedPct(value: number | null) {
   return `${sign}${value.toFixed(2)}%`;
 }
 
-function parseUrlState(search: string): { budget: number | null; positions: Array<{ ticker: string; shares: number }> } | null {
+function parseUrlState(
+  search: string,
+): {
+  budget: number | null;
+  positions: Array<{ ticker: string; shares: number }>;
+} | null {
   const params = new URLSearchParams(search);
   if (!params.has("b") && !params.has("s")) {
     return null;
@@ -69,7 +74,8 @@ function parseUrlState(search: string): { budget: number | null; positions: Arra
       const sharesParsed = Number.parseFloat(rawShares);
       shares.push({
         ticker,
-        shares: Number.isFinite(sharesParsed) && sharesParsed >= 0 ? sharesParsed : 0,
+        shares:
+          Number.isFinite(sharesParsed) && sharesParsed >= 0 ? sharesParsed : 0,
       });
     }
   }
@@ -90,11 +96,13 @@ function PerfBar({ value }: { value: number | null }) {
   const color = value >= 0 ? "bg-[#4ade80]" : "bg-[#f87171]";
   return (
     <div className="h-1.5 w-11 rounded bg-[#27272a]">
-      <div className={`h-full rounded ${color}`} style={{ width: `${Math.max(width * 100, 4)}%` }} />
+      <div
+        className={`h-full rounded ${color}`}
+        style={{ width: `${Math.max(width * 100, 4)}%` }}
+      />
     </div>
   );
 }
-
 
 const BUDGET_WARNING_THRESHOLD = 0.88;
 const BUDGET_DANGER_THRESHOLD = 1.0;
@@ -137,7 +145,9 @@ export default function Home() {
   const [budgetDraft, setBudgetDraft] = useState("");
   const [activePopoverId, setActivePopoverId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
-  const [perfLoadingMap, setPerfLoadingMap] = useState<Record<string, boolean>>({});
+  const [perfLoadingMap, setPerfLoadingMap] = useState<Record<string, boolean>>(
+    {},
+  );
   const [saving, setSaving] = useState(false);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
@@ -155,8 +165,11 @@ export default function Home() {
       positions.reduce(
         (total, position) =>
           total +
-          (typeof (position.locked ? position.lockedPrice : position.price) === "number"
-            ? (position.locked ? position.lockedPrice ?? 0 : position.price ?? 0) * position.shares
+          (typeof (position.locked ? position.lockedPrice : position.price) ===
+          "number"
+            ? (position.locked
+                ? (position.lockedPrice ?? 0)
+                : (position.price ?? 0)) * position.shares
             : 0),
         0,
       ),
@@ -214,7 +227,9 @@ export default function Home() {
 
       setLoading(positionId, true);
       try {
-        const response = await fetch(`/api/price?ticker=${encodeURIComponent(cleanedTicker)}`);
+        const response = await fetch(
+          `/api/price?ticker=${encodeURIComponent(cleanedTicker)}`,
+        );
         if (!response.ok) {
           throw new Error("Not found");
         }
@@ -230,7 +245,8 @@ export default function Home() {
         setPrice(positionId, {
           name: data.name ?? cleanedTicker,
           price: data.price,
-          changePct1D: typeof data.changePct1D === "number" ? data.changePct1D : null,
+          changePct1D:
+            typeof data.changePct1D === "number" ? data.changePct1D : null,
         });
       } catch {
         if (!isLatestPriceRequest()) {
@@ -254,7 +270,9 @@ export default function Home() {
       setPerfLoadingMap((state) => ({ ...state, [position.id]: true }));
 
       try {
-        const response = await fetch(`/api/perf?ticker=${encodeURIComponent(requestTicker)}`);
+        const response = await fetch(
+          `/api/perf?ticker=${encodeURIComponent(requestTicker)}`,
+        );
         if (!response.ok) {
           throw new Error("No data");
         }
@@ -272,10 +290,14 @@ export default function Home() {
         }
 
         setPerf(position.id, {
-          changePct1W: typeof data.changePct1W === "number" ? data.changePct1W : null,
-          changePct3M: typeof data.changePct3M === "number" ? data.changePct3M : null,
-          changePctYTD: typeof data.changePctYTD === "number" ? data.changePctYTD : null,
-          changePct1Y: typeof data.changePct1Y === "number" ? data.changePct1Y : null,
+          changePct1W:
+            typeof data.changePct1W === "number" ? data.changePct1W : null,
+          changePct3M:
+            typeof data.changePct3M === "number" ? data.changePct3M : null,
+          changePctYTD:
+            typeof data.changePctYTD === "number" ? data.changePctYTD : null,
+          changePct1Y:
+            typeof data.changePct1Y === "number" ? data.changePct1Y : null,
         });
       } catch {
         // Ignore API failures; next hover can retry.
@@ -290,12 +312,16 @@ export default function Home() {
 
   const handleTickerChange = useCallback(
     (positionId: string, nextTicker: string) => {
-      const position = useTrancheStore.getState().positions.find((candidate) => candidate.id === positionId);
+      const position = useTrancheStore
+        .getState()
+        .positions.find((candidate) => candidate.id === positionId);
       if (position?.locked) {
         return;
       }
-      priceRequestSeqRef.current[positionId] = (priceRequestSeqRef.current[positionId] ?? 0) + 1;
-      perfRequestSeqRef.current[positionId] = (perfRequestSeqRef.current[positionId] ?? 0) + 1;
+      priceRequestSeqRef.current[positionId] =
+        (priceRequestSeqRef.current[positionId] ?? 0) + 1;
+      perfRequestSeqRef.current[positionId] =
+        (perfRequestSeqRef.current[positionId] ?? 0) + 1;
       setPerfLoadingMap((state) => ({ ...state, [positionId]: false }));
       updateTicker(positionId, nextTicker);
     },
@@ -347,13 +373,20 @@ export default function Home() {
     setEditingBudget(false);
   }, [budgetDraft, setBudget]);
 
-  const handleBudgetKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") commitBudgetEdit();
-    if (event.key === "Escape") setEditingBudget(false);
-  }, [commitBudgetEdit]);
+  const handleBudgetKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === "Enter") commitBudgetEdit();
+      if (event.key === "Escape") setEditingBudget(false);
+    },
+    [commitBudgetEdit],
+  );
 
   const handleTickerKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLInputElement>, positionId: string, ticker: string) => {
+    (
+      event: React.KeyboardEvent<HTMLInputElement>,
+      positionId: string,
+      ticker: string,
+    ) => {
       if (event.key === "Enter" || event.key === "Tab") {
         event.preventDefault();
         void fetchPrice(positionId, ticker).then(() => {
@@ -414,7 +447,9 @@ export default function Home() {
   }, []);
 
   const requestReset = useCallback(() => {
-    const hasLockedPositions = useTrancheStore.getState().positions.some((position) => position.locked);
+    const hasLockedPositions = useTrancheStore
+      .getState()
+      .positions.some((position) => position.locked);
     if (hasLockedPositions) {
       setResetDialogOpen(true);
       return;
@@ -456,7 +491,9 @@ export default function Home() {
 
       toast.success("Allocation saved");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to save allocation");
+      toast.error(
+        error instanceof Error ? error.message : "Unable to save allocation",
+      );
     } finally {
       setSaving(false);
     }
@@ -496,7 +533,9 @@ export default function Home() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
         <div className="flex flex-col gap-3 pb-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-[34px] font-normal leading-none text-[#ffffff] [font-family:var(--font-logo)]">Tranche</h1>
+            <h1 className="text-[34px] font-normal leading-none text-[#ffffff] [font-family:var(--font-logo)]">
+              Tranche
+            </h1>
             <p className="text-sm text-[#a1a1aa]">Stock allocation tool.</p>
           </div>
           <nav className="flex w-full gap-2 rounded-sm border border-[#27272a] bg-[#111113] p-1 sm:w-auto">
@@ -541,7 +580,9 @@ export default function Home() {
                     Proceeds to allocate
                   </span>
                   <span className="flex items-baseline gap-3 px-3 pb-2 pt-1">
-                    <span className="text-3xl text-[#e4e4e7] [font-family:var(--font-ui)]">$</span>
+                    <span className="text-3xl text-[#e4e4e7] [font-family:var(--font-ui)]">
+                      $
+                    </span>
                     <span className="text-[42px] font-bold leading-none text-[#f59e0b] [font-family:var(--font-ui)]">
                       {budgetNumber.format(budget)}
                     </span>
@@ -552,7 +593,9 @@ export default function Home() {
 
             <div className="grid grid-cols-2 gap-3 sm:flex sm:items-start sm:gap-4 lg:gap-5">
               <div className="text-right">
-                <p className="text-xs uppercase tracking-[0.16em] text-[#52525b]">Allocated</p>
+                <p className="text-xs uppercase tracking-[0.16em] text-[#52525b]">
+                  Allocated
+                </p>
                 <p
                   className={`mt-2 text-[26px] leading-none [font-family:var(--font-mono)] ${overBudget ? "text-[#f87171]" : "text-[#4ade80]"}`}
                 >
@@ -560,7 +603,9 @@ export default function Home() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xs uppercase tracking-[0.16em] text-[#52525b]">Remaining</p>
+                <p className="text-xs uppercase tracking-[0.16em] text-[#52525b]">
+                  Remaining
+                </p>
                 <p
                   className={`mt-2 text-[26px] leading-none [font-family:var(--font-mono)] ${overBudget ? "text-[#f87171]" : "text-[#e4e4e7]"}`}
                 >
@@ -619,34 +664,18 @@ export default function Home() {
 
           <div className="divide-y divide-[#1a1a1e]">
             {positions.map((position, index) => {
-              const displayPrice = position.locked ? position.lockedPrice : position.price;
-              const total = typeof displayPrice === "number" ? displayPrice * position.shares : 0;
+              const displayPrice = position.locked
+                ? position.lockedPrice
+                : position.price;
+              const total =
+                typeof displayPrice === "number"
+                  ? displayPrice * position.shares
+                  : 0;
               const pctBudget = budget > 0 ? (total / budget) * 100 : 0;
-              const showPopover = activePopoverId === position.id && typeof displayPrice === "number" && !position.error;
-
-              const perfRows: Array<{ label: string; value: number | null; loading: boolean }> = [
-                { label: "1D", value: position.changePct1D, loading: false },
-                {
-                  label: "1W",
-                  value: position.perf?.changePct1W ?? null,
-                  loading: !!perfLoadingMap[position.id] && !position.perf,
-                },
-                {
-                  label: "3M",
-                  value: position.perf?.changePct3M ?? null,
-                  loading: !!perfLoadingMap[position.id] && !position.perf,
-                },
-                {
-                  label: "YTD",
-                  value: position.perf?.changePctYTD ?? null,
-                  loading: !!perfLoadingMap[position.id] && !position.perf,
-                },
-                {
-                  label: "1Y",
-                  value: position.perf?.changePct1Y ?? null,
-                  loading: !!perfLoadingMap[position.id] && !position.perf,
-                },
-              ];
+              const showPopover =
+                activePopoverId === position.id &&
+                typeof displayPrice === "number" &&
+                !position.error;
 
               return (
                 <div
@@ -664,13 +693,22 @@ export default function Home() {
                   onDrop={(event) => handleDrop(event, position.id)}
                   onDragEnd={() => setDragOverId(null)}
                   className={`grid min-w-[860px] cursor-grab grid-cols-[22px_26px_82px_minmax(190px,1fr)_130px_102px_78px_44px_44px] items-center gap-2 px-2 py-3 active:cursor-grabbing sm:px-3 ${
-                    dragOverId === position.id ? "bg-[#202024]" : position.locked ? "bg-[#111816]" : ""
+                    dragOverId === position.id
+                      ? "bg-[#202024]"
+                      : position.locked
+                        ? "bg-[#111816]"
+                        : ""
                   }`}
                 >
                   <span className="text-center text-sm font-bold text-[#f4f4f5] [font-family:var(--font-mono)]">
                     {index + 1}
                   </span>
-                  <label className="flex items-center justify-center" title={position.locked ? "Unlock row" : "Lock row and price"}>
+                  <label
+                    className="flex items-center justify-center"
+                    title={
+                      position.locked ? "Unlock row" : "Lock row and price"
+                    }
+                  >
                     <input
                       type="checkbox"
                       checked={position.locked}
@@ -686,9 +724,15 @@ export default function Home() {
                     maxLength={10}
                     placeholder="TICK"
                     disabled={position.locked}
-                    onChange={(event) => handleTickerChange(position.id, event.target.value)}
-                    onKeyDown={(event) => handleTickerKeyDown(event, position.id, position.ticker)}
-                    onBlur={() => handleTickerBlur(position.id, position.ticker)}
+                    onChange={(event) =>
+                      handleTickerChange(position.id, event.target.value)
+                    }
+                    onKeyDown={(event) =>
+                      handleTickerKeyDown(event, position.id, position.ticker)
+                    }
+                    onBlur={() =>
+                      handleTickerBlur(position.id, position.ticker)
+                    }
                     className="h-9 border-[#27272a] bg-[#09090b] px-2 text-center text-base font-semibold uppercase text-[#f59e0b] [font-family:var(--font-mono)] placeholder:text-[#3f3f46] disabled:border-[#14532d] disabled:text-[#86efac]"
                   />
 
@@ -708,14 +752,25 @@ export default function Home() {
                       <div className="flex items-center gap-2">
                         <div className="min-w-0">
                           <p className="truncate text-xs font-medium text-[#ffffff]">
-                            {position.name || (position.ticker ? "Waiting for quote" : "Enter ticker")}
+                            {position.name ||
+                              (position.ticker
+                                ? "Waiting for quote"
+                                : "Enter ticker")}
                           </p>
                           {typeof displayPrice === "number" ? (
                             <p className="mt-0.5 flex items-center gap-2 text-sm [font-family:var(--font-mono)]">
-                              <span className={position.locked ? "text-[#86efac]" : "text-[#4ade80]"}>
+                              <span
+                                className={
+                                  position.locked
+                                    ? "text-[#86efac]"
+                                    : "text-[#4ade80]"
+                                }
+                              >
                                 {currency.format(displayPrice)}
                               </span>
-                              <span className={perfColor(position.changePct1D)}>{formatSignedPct(position.changePct1D)}</span>
+                              <span className={perfColor(position.changePct1D)}>
+                                {formatSignedPct(position.changePct1D)}
+                              </span>
                               <span className="text-[#52525b]">...</span>
                               {position.locked && (
                                 <span className="rounded-sm border border-[#14532d] px-1.5 py-0.5 text-[10px] uppercase tracking-[0.1em] text-[#86efac]">
@@ -724,7 +779,9 @@ export default function Home() {
                               )}
                             </p>
                           ) : (
-                            <p className="mt-0.5 text-sm text-[#52525b] [font-family:var(--font-mono)]">--</p>
+                            <p className="mt-0.5 text-sm text-[#52525b] [font-family:var(--font-mono)]">
+                              --
+                            </p>
                           )}
                         </div>
                       </div>
@@ -739,23 +796,72 @@ export default function Home() {
                         <p className="text-lg text-[#e4e4e7] [font-family:var(--font-mono)]">
                           {currency.format(displayPrice ?? 0)}
                         </p>
-                        <p className={`mt-1 text-sm ${perfColor(position.changePct1D)}`}>
+                        <p
+                          className={`mt-1 text-sm ${perfColor(position.changePct1D)}`}
+                        >
                           {typeof position.changePct1D === "number"
                             ? `${position.changePct1D >= 0 ? "▲" : "▼"} ${formatSignedPct(position.changePct1D)} today`
                             : "-- today"}
                         </p>
                         <div className="mt-3 space-y-2">
-                          {perfRows.map((row) => (
-                            <div key={row.label} className="grid grid-cols-[24px_44px_1fr] items-center gap-2 text-xs">
-                              <span className="text-[#a1a1aa]">{row.label}</span>
-                              {row.loading ? <Skeleton className="h-1.5 w-11 bg-[#27272a]" /> : <PerfBar value={row.value} />}
-                              <span className={`text-right [font-family:var(--font-mono)] ${perfColor(row.value)}`}>
-                                {row.loading ? <Skeleton className="ml-auto h-3 w-12 bg-[#27272a]" /> : formatSignedPct(row.value)}
+                          {[
+                            {
+                              label: "1D",
+                              value: position.changePct1D,
+                              loading: false,
+                            },
+                            {
+                              label: "1W",
+                              value: position.perf?.changePct1W ?? null,
+                              loading:
+                                !!perfLoadingMap[position.id] && !position.perf,
+                            },
+                            {
+                              label: "3M",
+                              value: position.perf?.changePct3M ?? null,
+                              loading:
+                                !!perfLoadingMap[position.id] && !position.perf,
+                            },
+                            {
+                              label: "YTD",
+                              value: position.perf?.changePctYTD ?? null,
+                              loading:
+                                !!perfLoadingMap[position.id] && !position.perf,
+                            },
+                            {
+                              label: "1Y",
+                              value: position.perf?.changePct1Y ?? null,
+                              loading:
+                                !!perfLoadingMap[position.id] && !position.perf,
+                            },
+                          ].map((row) => (
+                            <div
+                              key={row.label}
+                              className="grid grid-cols-[24px_44px_1fr] items-center gap-2 text-xs"
+                            >
+                              <span className="text-[#a1a1aa]">
+                                {row.label}
+                              </span>
+                              {row.loading ? (
+                                <Skeleton className="h-1.5 w-11 bg-[#27272a]" />
+                              ) : (
+                                <PerfBar value={row.value} />
+                              )}
+                              <span
+                                className={`text-right [font-family:var(--font-mono)] ${perfColor(row.value)}`}
+                              >
+                                {row.loading ? (
+                                  <Skeleton className="ml-auto h-3 w-12 bg-[#27272a]" />
+                                ) : (
+                                  formatSignedPct(row.value)
+                                )}
                               </span>
                             </div>
                           ))}
                         </div>
-                        <p className="mt-3 text-[11px] text-[#52525b]">Prices may be delayed</p>
+                        <p className="mt-3 text-[11px] text-[#52525b]">
+                          Prices may be delayed
+                        </p>
                       </div>
                     )}
                   </div>
@@ -769,7 +875,9 @@ export default function Home() {
                     onChange={(shares) => setShares(position.id, shares)}
                   />
 
-                  <p className="text-right text-sm [font-family:var(--font-mono)]">{currency.format(total)}</p>
+                  <p className="text-right text-sm [font-family:var(--font-mono)]">
+                    {currency.format(total)}
+                  </p>
                   <div className="flex justify-center">
                     <span className="rounded border border-[#7c5412] bg-[#2f230f] px-2 py-0.5 text-xs text-[#f59e0b] [font-family:var(--font-mono)]">
                       {pctBudget.toFixed(1)}%
@@ -778,7 +886,11 @@ export default function Home() {
                   <NotePopover
                     position={position}
                     isOpen={activeNoteId === position.id}
-                    onToggle={() => setActiveNoteId((current) => (current === position.id ? null : position.id))}
+                    onToggle={() =>
+                      setActiveNoteId((current) =>
+                        current === position.id ? null : position.id,
+                      )
+                    }
                     onClose={() => setActiveNoteId(null)}
                     onChange={(notes) => setNotes(position.id, notes)}
                   />
@@ -802,7 +914,9 @@ export default function Home() {
               variant="outline"
               onClick={() => {
                 const newId = addPosition();
-                requestAnimationFrame(() => tickerInputRefs.current[newId]?.focus());
+                requestAnimationFrame(() =>
+                  tickerInputRefs.current[newId]?.focus(),
+                );
               }}
               className="h-10 w-full border border-dashed border-[#3f3f46] bg-transparent text-sm tracking-[0.14em] text-[#a1a1aa] hover:bg-[#202024] hover:text-[#e4e4e7]"
             >
@@ -825,17 +939,25 @@ export default function Home() {
             aria-labelledby="reset-title"
             className="w-full max-w-md rounded-sm border border-[var(--tranche-border-strong)] bg-[var(--tranche-panel)] p-5 shadow-2xl"
           >
-            <p id="reset-title" className="text-lg font-semibold text-[#f4f4f5]">
+            <p
+              id="reset-title"
+              className="text-lg font-semibold text-[#f4f4f5]"
+            >
               Reset allocation?
             </p>
             <p className="mt-2 text-sm leading-6 text-[var(--tranche-muted)]">
-              This allocation contains locked positions. Your proceeds budget will be preserved either way.
+              This allocation contains locked positions. Your proceeds budget
+              will be preserved either way.
             </p>
             <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button variant="ghost" onClick={() => setResetDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button variant="outline" onClick={resetKeepingLocked} className="border-[var(--tranche-border-strong)]">
+              <Button
+                variant="outline"
+                onClick={resetKeepingLocked}
+                className="border-[var(--tranche-border-strong)]"
+              >
                 Keep locked
               </Button>
               <Button variant="destructive" onClick={resetIncludingLocked}>
