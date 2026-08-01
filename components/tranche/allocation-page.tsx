@@ -477,10 +477,13 @@ export default function Home() {
   const copyShareLink = useCallback(async () => {
     const url = new URL(window.location.href);
     url.searchParams.set("b", String(Number(budget.toFixed(2))));
-    const shareState = positions
-      .filter((position) => position.ticker)
-      .map((position) => `${position.ticker}:${position.shares}`)
-      .join(",");
+    const shareState = positions.reduce((acc, position) => {
+      if (position.ticker) {
+        const item = `${position.ticker}:${position.shares}`;
+        return acc ? `${acc},${item}` : item;
+      }
+      return acc;
+    }, "");
     if (shareState) {
       url.searchParams.set("s", shareState);
     } else {
