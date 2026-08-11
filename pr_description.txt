@@ -1,0 +1,10 @@
+🔒 [Fix Missing Authentication on Allocation Creation]
+
+🎯 What:
+The `/api/allocations` POST endpoint lacked authentication checks, allowing any user to submit an allocation snapshot anonymously. This PR introduces standard Supabase authentication checks via `@supabase/ssr` to verify the user session before calling `saveAllocationSnapshot`.
+
+⚠️ Risk:
+Leaving this endpoint unprotected allows unauthorized users (or bots) to insert arbitrary allocation snapshots into the database. This could lead to a Denial of Service (DoS) by filling the database with spam data or result in malicious injection of unexpected payloads into the system's history.
+
+🛡️ Solution:
+I've implemented `createServerClient` from `@supabase/ssr` to intercept the request and execute `supabase.auth.getUser()`. If no valid user is returned, the endpoint now short-circuits and immediately responds with a `401 Unauthorized` status. Furthermore, a unit test was added (`app/api/allocations/route.test.ts`) to ensure unauthenticated requests correctly receive a 401 response and prevent future regressions.
